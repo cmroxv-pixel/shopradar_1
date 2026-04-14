@@ -3,8 +3,10 @@ import React, { useEffect, useState } from 'react';
 
 export default function ModeToggle() {
   const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const saved = localStorage.getItem('shopradar-mode');
     const dark = saved === 'dark';
     setIsDark(dark);
@@ -12,11 +14,10 @@ export default function ModeToggle() {
   }, []);
 
   function applyMode(dark: boolean) {
-    const html = document.documentElement;
     if (dark) {
-      html.setAttribute('data-mode', 'dark');
+      document.documentElement.setAttribute('data-mode', 'dark');
     } else {
-      html.removeAttribute('data-mode');
+      document.documentElement.removeAttribute('data-mode');
     }
   }
 
@@ -40,6 +41,7 @@ export default function ModeToggle() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'all 0.15s',
         flexShrink: 0,
+        opacity: mounted ? 1 : 0,
       }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLButtonElement;
@@ -52,14 +54,18 @@ export default function ModeToggle() {
         el.style.color = 'hsl(var(--muted-foreground))';
       }}
     >
+      {/* Sun icon — shown in dark mode to switch to light */}
       {isDark ? (
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <circle cx="7.5" cy="7.5" r="2.8" stroke="currentColor" strokeWidth="1.4"/>
-          <path d="M7.5 1v1.2M7.5 12.8V14M1 7.5h1.2M12.8 7.5H14M3.1 3.1l.85.85M11.05 11.05l.85.85M3.1 11.9l.85-.85M11.05 3.95l.85-.85" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          <path d="M7.5 1.5v1.2M7.5 12.3v1.2M1.5 7.5h1.2M12.3 7.5h1.2M3.4 3.4l.85.85M10.75 10.75l.85.85M3.4 11.6l.85-.85M10.75 4.25l.85-.85"
+            stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
         </svg>
       ) : (
+        /* Moon icon — shown in light mode to switch to dark */
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M12 8.5A5.5 5.5 0 015.5 2a5.5 5.5 0 100 10A5.5 5.5 0 0012 8.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+          <path d="M11.5 8.5A5 5 0 015 2a5 5 0 100 10 5 5 0 006.5-3.5z"
+            stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
         </svg>
       )}
     </button>
