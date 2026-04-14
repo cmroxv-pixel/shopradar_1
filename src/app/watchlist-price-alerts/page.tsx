@@ -4,7 +4,7 @@ import WatchlistClient from './components/WatchlistClient';
 
 export default function WatchlistPriceAlertsPage() {
   return (
-    <AppLayout isLoggedIn>
+    <AppLayout isLoggedIn dotVariant="watchlist">
       <WatchlistClient />
     </AppLayout>
   );
