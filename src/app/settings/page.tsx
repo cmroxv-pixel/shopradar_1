@@ -3,7 +3,7 @@ import SettingsClient from './components/SettingsClient';
 
 export default function SettingsPage() {
   return (
-    <AppLayout>
+    <AppLayout dotVariant="settings">
       <SettingsClient />
     </AppLayout>
   );
