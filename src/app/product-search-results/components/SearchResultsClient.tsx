@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
 import SearchBar from './SearchBar';
 import AddressSelector from './AddressSelector';
@@ -11,6 +11,81 @@ import CurrencyConverter from './CurrencyConverter';
 import CategoryFilter from './CategoryFilter';
 import { type Listing } from './mockData';
 import { SlidersHorizontal, Palette, TrendingDown, Zap, Globe, ChevronDown } from 'lucide-react';
+
+const SEARCH_STEPS = [
+  { message: 'Searching Google Shopping…', progress: 10 },
+  { message: 'Finding listings across 40+ marketplaces…', progress: 25 },
+  { message: 'Resolving direct product URLs…', progress: 45 },
+  { message: 'Fetching store pages for each result…', progress: 60 },
+  { message: 'Comparing prices & delivery times…', progress: 75 },
+  { message: 'Almost there — finalising results…', progress: 90 },
+];
+
+function StatusBar({ isSearching, query }: { isSearching: boolean; query: string }) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isSearching) {
+      setStepIndex(0);
+      setProgress(SEARCH_STEPS[0].progress);
+
+      intervalRef.current = setInterval(() => {
+        setStepIndex(prev => {
+          const next = prev + 1;
+          if (next >= SEARCH_STEPS.length) {
+            // Stay on last step
+            setProgress(SEARCH_STEPS[SEARCH_STEPS.length - 1].progress);
+            return SEARCH_STEPS.length - 1;
+          }
+          setProgress(SEARCH_STEPS[next].progress);
+          return next;
+        });
+      }, 1200);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setProgress(0);
+      setStepIndex(0);
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isSearching]);
+
+  if (!isSearching) return null;
+
+  const currentStep = SEARCH_STEPS[stepIndex];
+
+  return (
+    <div className="mt-4 w-full bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+      {/* Top row */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <span className="animate-spin inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full shrink-0" />
+          <span className="text-sm font-medium text-foreground">{currentStep.message}</span>
+        </div>
+        <span className="text-xs text-muted-foreground font-mono tabular-nums">{currentStep.progress}%</span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 w-full bg-muted">
+        <div
+          className="h-full bg-primary transition-all duration-700 ease-in-out rounded-full"
+          style={{ width: `${currentStep.progress}%` }}
+        />
+      </div>
+
+      {/* Bottom label */}
+      <div className="px-4 py-2 bg-muted/30">
+        <p className="text-xs text-muted-foreground">
+          Searching for <span className="font-semibold text-foreground">"{query}"</span> — this takes ~7 seconds
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function SearchResultsClient() {
   const [query, setQuery] = useState({ name: '' });
@@ -32,7 +107,6 @@ export default function SearchResultsClient() {
   const [exchangeRate, setExchangeRate] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Primary search: SerpAPI Google Shopping + ScrapingBee for direct URLs
   const fetchSerpApiResults = useCallback(async (productName: string, country: string): Promise<Listing[]> => {
     try {
       const params = new URLSearchParams({
@@ -180,13 +254,8 @@ export default function SearchResultsClient() {
           <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
         </div>
 
-        {/* Loading indicator */}
-        {isSearching && (
-          <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-accent/10 border border-accent/20 rounded-lg text-xs font-medium text-accent w-fit">
-            <span className="animate-spin inline-block w-3 h-3 border-2 border-accent border-t-transparent rounded-full" />
-            Searching Google Shopping &amp; resolving product URLs…
-          </div>
-        )}
+        {/* Status bar */}
+        <StatusBar isSearching={isSearching} query={query.name} />
       </div>
 
       {/* Search + Address section */}
