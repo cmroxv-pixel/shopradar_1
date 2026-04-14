@@ -195,7 +195,7 @@ export default function SearchResultsClient() {
     <div style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
       <Toaster position="bottom-right" toastOptions={{ style: { background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', fontFamily: 'DM Sans, sans-serif', fontSize: 13 } }} />
 
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '28px 16px 120px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '28px 16px 120px' }}>
 
         {/* Hero */}
         <div className="animate-fade-up" style={{ textAlign: 'center', marginBottom: 32 }}>
