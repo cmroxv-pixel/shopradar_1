@@ -1,101 +1,139 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ─── Fallback search-page URLs (last resort only) ────────────────────────────
-const MARKETPLACE_SEARCH_URLS: Record<string, (q: string) => string> = {
-  'amazon':           (q) => `https://www.amazon.com.au/s?k=${q}`,
-  'amazon australia': (q) => `https://www.amazon.com.au/s?k=${q}`,
-  'amazon.com.au':    (q) => `https://www.amazon.com.au/s?k=${q}`,
-  'amazon.com':       (q) => `https://www.amazon.com/s?k=${q}`,
-  'amazon.co.uk':     (q) => `https://www.amazon.co.uk/s?k=${q}`,
-  'ebay':             (q) => `https://www.ebay.com.au/sch/i.html?_nkw=${q}`,
-  'ebay.com.au':      (q) => `https://www.ebay.com.au/sch/i.html?_nkw=${q}`,
-  'ebay.com':         (q) => `https://www.ebay.com/sch/i.html?_nkw=${q}`,
-  'walmart':          (q) => `https://www.walmart.com/search?q=${q}`,
-  'best buy':         (q) => `https://www.bestbuy.com/site/searchpage.jsp?st=${q}`,
-  'jb hi-fi':         (q) => `https://www.jbhifi.com.au/search?q=${q}`,
-  'jb hifi':          (q) => `https://www.jbhifi.com.au/search?q=${q}`,
-  'harvey norman':    (q) => `https://www.harveynorman.com.au/search?q=${q}`,
-  'officeworks':      (q) => `https://www.officeworks.com.au/shop/officeworks/search?q=${q}`,
-  'kogan':            (q) => `https://www.kogan.com/au/shop/?q=${q}`,
-  'big w':            (q) => `https://www.bigw.com.au/search?q=${q}`,
-  'catch':            (q) => `https://www.catch.com.au/search/?q=${q}`,
-  'the good guys':    (q) => `https://www.thegoodguys.com.au/SearchDisplay?searchTerm=${q}`,
-  'bing lee':         (q) => `https://www.binglee.com.au/search?q=${q}`,
-  'etsy':             (q) => `https://www.etsy.com/search?q=${q}`,
-  'aliexpress':       (q) => `https://www.aliexpress.com/wholesale?SearchText=${q}`,
-  'newegg':           (q) => `https://www.newegg.com/p/pl?d=${q}`,
-  'target':           (q) => `https://www.target.com/s?searchTerm=${q}`,
-  'cash converters':  (q) => `https://www.cashconverters.com.au/shop/search?q=${q}`,
-  'cashconverters':   (q) => `https://www.cashconverters.com.au/shop/search?q=${q}`,
-};
-
-function getFallbackUrl(marketplace: string, productName: string): string {
-  const q = encodeURIComponent(productName);
-  const m = marketplace.toLowerCase().trim();
-  if (MARKETPLACE_SEARCH_URLS[m]) return MARKETPLACE_SEARCH_URLS[m](q);
-  for (const [key, fn] of Object.entries(MARKETPLACE_SEARCH_URLS)) {
-    if (m.includes(key) || key.includes(m)) return fn(q);
-  }
-  return `https://www.google.com/search?q=${encodeURIComponent(productName + ' ' + marketplace + ' buy')}`;
-}
-
-function isGoogleUrl(url: string): boolean {
-  if (!url) return true;
-  try {
-    const h = new URL(url).hostname;
-    return h.includes('google.com') || h.includes('googleapis.com') || h.includes('gstatic.com');
-  } catch {
-    return true;
-  }
-}
-
 /**
- * Step 2: Use SerpAPI google_product engine to get real seller offer links.
- * Each product in Google Shopping has a product_id — this endpoint returns
- * all sellers with their direct store URLs.
+ * Build the best possible direct URL for a given marketplace + product title.
+ * These are real search-results pages filtered to the exact product title,
+ * which is as close as we can get without scraping individual listing pages.
+ *
+ * For marketplaces like Cash Converters and CeX that have structured URLs,
+ * we use their proper search endpoints.
  */
-async function getDirectUrlFromProductOffers(
-  productId: string,
-  marketplace: string,
-  serpApiKey: string,
-  country: string
-): Promise<string> {
-  try {
-    const params = new URLSearchParams({
-      engine: 'google_product',
-      product_id: productId,
-      api_key: serpApiKey,
-      hl: 'en',
-      gl: country,
-    });
+function buildDirectUrl(marketplace: string, title: string, query: string): string {
+  const t = encodeURIComponent(title);   // exact product title
+  const q = encodeURIComponent(query);   // original search term
+  const m = marketplace.toLowerCase().trim();
 
-    const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
-    if (!res.ok) return '';
-
-    const data = await res.json();
-    const sellers: any[] = data?.sellers_results?.online_sellers || [];
-    if (sellers.length === 0) return '';
-
-    const mLower = marketplace.toLowerCase();
-
-    // Try to match the exact marketplace first
-    for (const seller of sellers) {
-      const name = (seller.name || seller.seller || '').toLowerCase();
-      const link = seller.link || seller.base_price_link || '';
-      if (!link || isGoogleUrl(link)) continue;
-      if (name.includes(mLower) || mLower.includes(name)) return link;
+  // ── eBay ──────────────────────────────────────────────────────────────────
+  if (m.startsWith('ebay')) {
+    // If the marketplace includes a seller name (e.g. "eBay - willenhospiceventuresltd")
+    // search eBay with the exact title — far better than a generic keyword search
+    const sellerMatch = marketplace.match(/eBay\s*[-–]\s*(.+)/i);
+    if (sellerMatch) {
+      const seller = encodeURIComponent(sellerMatch[1].trim());
+      return `https://www.ebay.com.au/sch/i.html?_nkw=${t}&_sacat=0&_sop=12`;
     }
-
-    // Otherwise return the first valid direct link
-    for (const seller of sellers) {
-      const link = seller.link || seller.base_price_link || '';
-      if (link && !isGoogleUrl(link)) return link;
-    }
-
-    return '';
-  } catch {
-    return '';
+    return `https://www.ebay.com.au/sch/i.html?_nkw=${t}&_sacat=0&_sop=12`;
   }
+
+  // ── Cash Converters ───────────────────────────────────────────────────────
+  if (m.includes('cash converters')) {
+    return `https://www.cashconverters.com.au/shop/search?q=${t}`;
+  }
+
+  // ── CeX ───────────────────────────────────────────────────────────────────
+  if (m === 'cex' || m.includes('cex')) {
+    return `https://au.webuy.com/search?q=${t}`;
+  }
+
+  // ── Ubuy ──────────────────────────────────────────────────────────────────
+  if (m.includes('ubuy')) {
+    return `https://www.ubuy.com.au/en/search/?q=${t}`;
+  }
+
+  // ── Amazon ────────────────────────────────────────────────────────────────
+  if (m.includes('amazon')) {
+    if (m.includes('.co.uk')) return `https://www.amazon.co.uk/s?k=${t}`;
+    if (m.includes('.com') && !m.includes('.au')) return `https://www.amazon.com/s?k=${t}`;
+    return `https://www.amazon.com.au/s?k=${t}`;
+  }
+
+  // ── JB Hi-Fi ──────────────────────────────────────────────────────────────
+  if (m.includes('jb')) {
+    return `https://www.jbhifi.com.au/search?q=${t}`;
+  }
+
+  // ── Harvey Norman ─────────────────────────────────────────────────────────
+  if (m.includes('harvey')) {
+    return `https://www.harveynorman.com.au/search?q=${t}`;
+  }
+
+  // ── Kogan ─────────────────────────────────────────────────────────────────
+  if (m.includes('kogan')) {
+    return `https://www.kogan.com/au/shop/?q=${t}`;
+  }
+
+  // ── Big W ─────────────────────────────────────────────────────────────────
+  if (m.includes('big w')) {
+    return `https://www.bigw.com.au/search?q=${t}`;
+  }
+
+  // ── Catch ─────────────────────────────────────────────────────────────────
+  if (m.includes('catch')) {
+    return `https://www.catch.com.au/search/?q=${t}`;
+  }
+
+  // ── The Good Guys ─────────────────────────────────────────────────────────
+  if (m.includes('good guys')) {
+    return `https://www.thegoodguys.com.au/SearchDisplay?searchTerm=${t}`;
+  }
+
+  // ── Bing Lee ──────────────────────────────────────────────────────────────
+  if (m.includes('bing lee')) {
+    return `https://www.binglee.com.au/search?q=${t}`;
+  }
+
+  // ── Officeworks ───────────────────────────────────────────────────────────
+  if (m.includes('officeworks')) {
+    return `https://www.officeworks.com.au/shop/officeworks/search?q=${t}`;
+  }
+
+  // ── Myer ─────────────────────────────────────────────────────────────────
+  if (m.includes('myer')) {
+    return `https://www.myer.com.au/search?query=${t}`;
+  }
+
+  // ── David Jones ───────────────────────────────────────────────────────────
+  if (m.includes('david jones')) {
+    return `https://www.davidjones.com/search?q=${t}`;
+  }
+
+  // ── Walmart ───────────────────────────────────────────────────────────────
+  if (m.includes('walmart')) {
+    return `https://www.walmart.com/search?q=${t}`;
+  }
+
+  // ── Best Buy ──────────────────────────────────────────────────────────────
+  if (m.includes('best buy')) {
+    return `https://www.bestbuy.com/site/searchpage.jsp?st=${t}`;
+  }
+
+  // ── Newegg ────────────────────────────────────────────────────────────────
+  if (m.includes('newegg')) {
+    return `https://www.newegg.com/p/pl?d=${t}`;
+  }
+
+  // ── AliExpress ────────────────────────────────────────────────────────────
+  if (m.includes('aliexpress')) {
+    return `https://www.aliexpress.com/wholesale?SearchText=${t}`;
+  }
+
+  // ── Etsy ──────────────────────────────────────────────────────────────────
+  if (m.includes('etsy')) {
+    return `https://www.etsy.com/search?q=${t}`;
+  }
+
+  // ── Gumtree ───────────────────────────────────────────────────────────────
+  if (m.includes('gumtree')) {
+    return `https://www.gumtree.com.au/s-${encodeURIComponent(query)}/k0`;
+  }
+
+  // ── Super Retro ───────────────────────────────────────────────────────────
+  if (m.includes('super retro')) {
+    return `https://www.superretro.com.au/search?q=${t}`;
+  }
+
+  // ── Generic fallback: Google Shopping filtered to this marketplace ─────────
+  return `https://www.google.com/search?q=${encodeURIComponent(title)}+site:${encodeURIComponent(marketplace.split(' ')[0].toLowerCase())}`;
 }
 
 function parseDelivery(deliveryStr: string): {
@@ -146,7 +184,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing SERPAPI_KEY' }, { status: 500 });
 
   try {
-    // ── Step 1: Google Shopping search ────────────────────────────────────────
     const shoppingParams = new URLSearchParams({
       engine: 'google_shopping',
       q: query,
@@ -176,77 +213,48 @@ export async function GET(req: NextRequest) {
       country === 'us' ? 'USD' :
       country === 'eu' ? 'EUR' : 'AUD';
 
-    // ── Step 2: Resolve direct product URLs in parallel ────────────────────────
-    // Cap at 12 to limit SerpAPI credit usage (1 credit per product lookup)
-    const topResults = rawResults.slice(0, 12);
+    const listings = rawResults.slice(0, 20).map((item: any, idx: number) => {
+      const rawPrice =
+        typeof item.extracted_price === 'number'
+          ? item.extracted_price
+          : parseFloat(String(item.price || '0').replace(/[^0-9.]/g, ''));
 
-    const listings = await Promise.all(
-      topResults.map(async (item: any, idx: number) => {
-        const rawPrice =
-          typeof item.extracted_price === 'number'
-            ? item.extracted_price
-            : parseFloat(String(item.price || '0').replace(/[^0-9.]/g, ''));
+      const marketplace = String(item.source || 'Unknown');
+      const title = String(item.title || query);
 
-        const marketplace = String(item.source || 'Unknown');
-        const productId: string = item.product_id || '';
-        let directUrl = '';
+      // Build the best direct URL using the exact product title
+      const directUrl = buildDirectUrl(marketplace, title, query);
 
-        // Best path: google_product engine gives real seller URLs
-        if (productId) {
-          directUrl = await getDirectUrlFromProductOffers(
-            productId,
-            marketplace,
-            serpApiKey,
-            country
-          );
-        }
+      const delivery = parseDelivery(String(item.delivery || ''));
 
-        // Fallback: check raw link fields from shopping result
-        if (!directUrl) {
-          for (const candidate of [item.product_link, item.link]) {
-            if (candidate && !isGoogleUrl(candidate)) {
-              directUrl = candidate;
-              break;
-            }
-          }
-        }
-
-        // Last resort: marketplace search page for this query
-        if (!directUrl) {
-          directUrl = getFallbackUrl(marketplace, query);
-        }
-
-        const delivery = parseDelivery(String(item.delivery || ''));
-
-        return {
-          id: `serpapi-${idx}-${Math.random().toString(36).slice(2, 7)}`,
-          title: String(item.title || query),
-          productName: String(item.title || query),
-          model: '',
-          color: '',
-          price: rawPrice,
-          originalPrice: rawPrice,
-          currency,
-          marketplace,
-          marketplaceLogo: '🛒',
-          listingUrl: directUrl,
-          condition: item.second_hand_condition ? 'Used' : ('New' as const),
-          location: country,
-          stockStatus: 'In Stock' as const,
-          sellerRating: typeof item.rating === 'number' ? item.rating : 4.5,
-          sellerReviews: typeof item.reviews === 'number' ? item.reviews : 0,
-          deliveryDays: delivery.days,
-          deliveryDate: delivery.date,
-          shippingTier: delivery.tier,
-          shippingCost: delivery.cost,
-          freeReturns: false,
-          imageUrl: item.thumbnail || '',
-          priceHistory: [],
-          deliveryOptions: [{ tier: delivery.tier, days: delivery.days, cost: delivery.cost }],
-          rawDelivery: String(item.delivery || ''),
-        };
-      })
-    );
+      return {
+        id: `serpapi-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+        title,
+        productName: title,
+        model: '',
+        color: '',
+        price: rawPrice,
+        originalPrice: rawPrice,
+        currency,
+        marketplace,
+        marketplaceLogo: '🛒',
+        listingUrl: directUrl,
+        condition: item.second_hand_condition ? 'Used' : ('New' as const),
+        location: country,
+        stockStatus: 'In Stock' as const,
+        sellerRating: typeof item.rating === 'number' ? item.rating : 4.5,
+        sellerReviews: typeof item.reviews === 'number' ? item.reviews : 0,
+        deliveryDays: delivery.days,
+        deliveryDate: delivery.date,
+        shippingTier: delivery.tier,
+        shippingCost: delivery.cost,
+        freeReturns: false,
+        imageUrl: item.thumbnail || '',
+        priceHistory: [],
+        deliveryOptions: [{ tier: delivery.tier, days: delivery.days, cost: delivery.cost }],
+        rawDelivery: String(item.delivery || ''),
+      };
+    });
 
     return NextResponse.json({ listings });
   } catch (err) {
