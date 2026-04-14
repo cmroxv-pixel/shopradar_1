@@ -40,17 +40,19 @@ export default function BottomNav() {
 
   return (
     <nav className="bottom-nav fixed bottom-0 left-0 right-0 z-40">
-      <div className="max-w-lg mx-auto px-4 h-16 flex items-center justify-around">
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
         {NAV.map(({ href, label, icon }) => {
           const active = pathname === href || pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-1 px-4 py-1 rounded-xl transition-all duration-150"
               style={{
-                color: active ? 'var(--primary)' : 'var(--text-muted)',
-                filter: active ? 'drop-shadow(0 0 6px var(--primary))' : 'none',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                padding: '6px 20px', borderRadius: 10, textDecoration: 'none',
+                color: active ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+                filter: active ? 'drop-shadow(0 0 6px hsl(var(--primary) / 0.5))' : 'none',
+                transition: 'all 0.15s',
               }}
             >
               {icon}
