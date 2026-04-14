@@ -13,20 +13,12 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'ShopRadar — Find the Best Price, Delivered Fastest',
   description: 'ShopRadar scans Amazon, eBay, and boutique stores worldwide to show you the cheapest in-stock price with accurate delivery estimates to your door.',
-  icons: {
-    icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
-  },
+  icons: { icon: [{ url: '/favicon.ico', type: 'image/x-icon' }] },
   manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'ShopRadar',
-  },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'ShopRadar' },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <head>
