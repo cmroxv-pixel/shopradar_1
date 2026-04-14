@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 function isGoogleUrl(url: string): boolean {
   if (!url) return true;
   try {
     const h = new URL(url).hostname;
     return h.includes('google.com') || h.includes('googleapis.com') || h.includes('gstatic.com');
-  } catch {
-    return true;
-  }
+  } catch { return true; }
 }
 
 async function getDirectUrlFromImmersiveApi(
@@ -16,50 +15,34 @@ async function getDirectUrlFromImmersiveApi(
   serpApiKey: string
 ): Promise<string> {
   try {
-    const urlWithKey = `${immersiveApiUrl}&api_key=${serpApiKey}`;
-    const res = await fetch(urlWithKey);
+    const res = await fetch(`${immersiveApiUrl}&api_key=${serpApiKey}`);
     if (!res.ok) return '';
     const data = await res.json();
-
-    // The correct field is product_results.stores (not sellers_results)
     const stores: any[] = data?.product_results?.stores || [];
     if (stores.length === 0) return '';
-
     const mLower = marketplace.toLowerCase().replace(/\s*-\s*.+$/, '').trim();
-
-    // Try to find the specific marketplace store first
     for (const store of stores) {
       const name = (store.name || '').toLowerCase();
       const link = store.link || '';
       if (!link || isGoogleUrl(link)) continue;
       if (name.includes(mLower) || mLower.includes(name)) return link;
     }
-
-    // Return the first valid direct store link
     for (const store of stores) {
       const link = store.link || '';
       if (link && !isGoogleUrl(link)) return link;
     }
-
     return '';
-  } catch {
-    return '';
-  }
+  } catch { return ''; }
 }
 
 function buildFallbackUrl(marketplace: string, title: string, query: string): string {
   const t = encodeURIComponent(title);
   const m = marketplace.toLowerCase().trim().replace(/\s*-\s*.+$/, '');
-
   if (m.startsWith('ebay')) return `https://www.ebay.com.au/sch/i.html?_nkw=${t}&_sop=12`;
   if (m.includes('cash converters')) return `https://www.cashconverters.com.au/shop/search?q=${t}`;
   if (m === 'cex' || m.startsWith('cex')) return `https://au.webuy.com/search?q=${t}`;
   if (m.includes('ubuy')) return `https://www.ubuy.com.au/en/search/?q=${t}`;
-  if (m.includes('amazon')) {
-    if (m.includes('.co.uk')) return `https://www.amazon.co.uk/s?k=${t}`;
-    if (m.includes('.com') && !m.includes('.au')) return `https://www.amazon.com/s?k=${t}`;
-    return `https://www.amazon.com.au/s?k=${t}`;
-  }
+  if (m.includes('amazon')) return `https://www.amazon.com.au/s?k=${t}`;
   if (m.includes('jb')) return `https://www.jbhifi.com.au/search?q=${t}`;
   if (m.includes('harvey')) return `https://www.harveynorman.com.au/search?q=${t}`;
   if (m.includes('kogan')) return `https://www.kogan.com/au/shop/?q=${t}`;
@@ -68,19 +51,13 @@ function buildFallbackUrl(marketplace: string, title: string, query: string): st
   if (m.includes('good guys')) return `https://www.thegoodguys.com.au/SearchDisplay?searchTerm=${t}`;
   if (m.includes('bing lee')) return `https://www.binglee.com.au/search?q=${t}`;
   if (m.includes('officeworks')) return `https://www.officeworks.com.au/shop/officeworks/search?q=${t}`;
-  if (m.includes('myer')) return `https://www.myer.com.au/search?query=${t}`;
-  if (m.includes('david jones')) return `https://www.davidjones.com/search?q=${t}`;
   if (m.includes('walmart')) return `https://www.walmart.com/search?q=${t}`;
   if (m.includes('best buy')) return `https://www.bestbuy.com/site/searchpage.jsp?st=${t}`;
-  if (m.includes('newegg')) return `https://www.newegg.com/p/pl?d=${t}`;
-  if (m.includes('aliexpress')) return `https://www.aliexpress.com/wholesale?SearchText=${t}`;
   if (m.includes('etsy')) return `https://www.etsy.com/search?q=${t}`;
-  if (m.includes('super retro')) return `https://www.superretro.com.au/search?q=${t}`;
-  if (m.includes('noble knight')) return `https://www.nobleknight.com/Search?search=${t}`;
+  if (m.includes('aliexpress')) return `https://www.aliexpress.com/wholesale?SearchText=${t}`;
   if (m.includes('salvos')) return `https://www.salvosstores.com.au/search?q=${t}`;
-  if (m.includes('whatnot')) return `https://www.whatnot.com/search?q=${encodeURIComponent(query)}`;
-  if (m.includes('snapklik')) return `https://snapklik.com/au/?q=${t}`;
-
+  if (m.includes('noble knight')) return `https://www.nobleknight.com/Search?search=${t}`;
+  if (m.includes('super retro')) return `https://www.superretro.com.au/search?q=${t}`;
   return `https://www.google.com/search?q=${encodeURIComponent(title + ' buy')}`;
 }
 
@@ -89,8 +66,7 @@ function parseDelivery(deliveryStr: string): {
 } {
   if (!deliveryStr) return { days: 7, date: '', cost: 0, tier: 'Standard' };
   const lower = deliveryStr.toLowerCase();
-  const isExpress = lower.includes('express') || lower.includes('next day') ||
-    lower.includes('same day') || lower.includes('overnight');
+  const isExpress = lower.includes('express') || lower.includes('next day') || lower.includes('same day') || lower.includes('overnight');
   const dateMatch = deliveryStr.match(/([A-Z][a-z]{2},?\s+\d{1,2}\s+[A-Z][a-z]{2,}|\d{1,2}\s+[A-Z][a-z]{2,})/);
   const dateStr = dateMatch ? dateMatch[0] : '';
   let days = isExpress ? 2 : 7;
@@ -103,9 +79,71 @@ function parseDelivery(deliveryStr: string): {
       }
     } catch { /* keep fallback */ }
   }
-  const tier: 'Express' | 'Standard' | 'Economy' =
-    isExpress || days <= 2 ? 'Express' : days <= 7 ? 'Standard' : 'Economy';
+  const tier: 'Express' | 'Standard' | 'Economy' = isExpress || days <= 2 ? 'Express' : days <= 7 ? 'Standard' : 'Economy';
   return { days, date: dateStr, cost: 0, tier };
+}
+
+// Store price snapshot in Supabase for price history
+async function storePriceHistory(listings: any[], query: string) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const today = new Date().toISOString().split('T')[0];
+
+    for (const listing of listings.slice(0, 5)) {
+      if (!listing.price || listing.price <= 0) continue;
+      const { data: existing } = await supabase
+        .from('price_snapshots')
+        .select('id')
+        .eq('product_query', query.toLowerCase())
+        .eq('marketplace', listing.marketplace)
+        .eq('snapshot_date', today)
+        .single();
+
+      if (!existing) {
+        await supabase.from('price_snapshots').insert({
+          product_query: query.toLowerCase(),
+          marketplace: listing.marketplace,
+          price: listing.price,
+          currency: listing.currency,
+          listing_url: listing.listingUrl,
+          title: listing.title,
+          snapshot_date: today,
+        });
+      }
+    }
+  } catch { /* non-fatal */ }
+}
+
+// Fetch price history for a query
+async function fetchPriceHistory(query: string): Promise<Record<string, any[]>> {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) return {};
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const { data } = await supabase
+      .from('price_snapshots')
+      .select('marketplace, price, snapshot_date')
+      .eq('product_query', query.toLowerCase())
+      .gte('snapshot_date', thirtyDaysAgo)
+      .order('snapshot_date', { ascending: true });
+
+    if (!data) return {};
+
+    const grouped: Record<string, any[]> = {};
+    for (const row of data) {
+      if (!grouped[row.marketplace]) grouped[row.marketplace] = [];
+      grouped[row.marketplace].push({ date: row.snapshot_date, price: row.price });
+    }
+    return grouped;
+  } catch { return {}; }
 }
 
 export async function GET(req: NextRequest) {
@@ -116,20 +154,15 @@ export async function GET(req: NextRequest) {
   if (!query) return NextResponse.json({ error: 'Missing query' }, { status: 400 });
 
   const serpApiKey = process.env.SERPAPI_KEY;
-  if (!serpApiKey)
-    return NextResponse.json({ error: 'Missing SERPAPI_KEY' }, { status: 500 });
+  if (!serpApiKey) return NextResponse.json({ error: 'Missing SERPAPI_KEY' }, { status: 500 });
 
   try {
     const shoppingParams = new URLSearchParams({
-      engine: 'google_shopping',
-      q: query,
-      api_key: serpApiKey,
-      num: '20',
-      hl: 'en',
-      gl: country,
+      engine: 'google_shopping', q: query, api_key: serpApiKey,
+      num: '20', hl: 'en', gl: country,
     });
 
-    const shoppingRes = await fetch(`https://serpapi.com/search.json?${shoppingParams.toString()}`);
+    const shoppingRes = await fetch(`https://serpapi.com/search.json?${shoppingParams}`);
     if (!shoppingRes.ok) {
       const err = await shoppingRes.text();
       return NextResponse.json({ error: 'SerpApi error', detail: err }, { status: 500 });
@@ -140,8 +173,12 @@ export async function GET(req: NextRequest) {
       (item: any) => (item.extracted_price || item.price) && item.source && item.title
     );
 
-    const currency = country === 'au' ? 'AUD' : country === 'gb' ? 'GBP' :
-      country === 'us' ? 'USD' : country === 'eu' ? 'EUR' : 'AUD';
+    const currency = country === 'au' ? 'AUD' : country === 'gb' ? 'GBP' : country === 'us' ? 'USD' : 'AUD';
+
+    // Fetch price history in parallel with URL resolution
+    const [historyByMarketplace] = await Promise.all([
+      fetchPriceHistory(query),
+    ]);
 
     const topResults = rawResults.slice(0, 15);
 
@@ -159,42 +196,57 @@ export async function GET(req: NextRequest) {
         if (immersiveUrl) {
           directUrl = await getDirectUrlFromImmersiveApi(immersiveUrl, marketplace, serpApiKey);
         }
-
-        if (!directUrl) {
-          directUrl = buildFallbackUrl(marketplace, title, query);
-        }
+        if (!directUrl) directUrl = buildFallbackUrl(marketplace, title, query);
 
         const delivery = parseDelivery(String(item.delivery || ''));
 
+        // Calculate trust score
+        const reviews = typeof item.reviews === 'number' ? item.reviews : 0;
+        const rating = typeof item.rating === 'number' ? item.rating : 0;
+        const hasReturns = String(item.delivery || '').toLowerCase().includes('return');
+        let trustScore = 0;
+        if (rating >= 4.5) trustScore += 40;
+        else if (rating >= 4.0) trustScore += 25;
+        else if (rating >= 3.5) trustScore += 10;
+        if (reviews >= 1000) trustScore += 35;
+        else if (reviews >= 100) trustScore += 20;
+        else if (reviews >= 10) trustScore += 10;
+        if (hasReturns) trustScore += 15;
+        if (['eBay', 'Amazon', 'JB Hi-Fi', 'Harvey Norman', 'Kogan', 'The Good Guys'].some(s => marketplace.includes(s))) trustScore += 10;
+        const trustLabel = trustScore >= 70 ? 'Trusted' : trustScore >= 40 ? 'Verified' : 'Unverified';
+
+        // Price history for this marketplace
+        const priceHistory = historyByMarketplace[marketplace] || [];
+
         return {
           id: `serpapi-${idx}-${Math.random().toString(36).slice(2, 7)}`,
-          title,
-          productName: title,
-          model: '',
-          color: '',
-          price: rawPrice,
-          originalPrice: rawPrice,
-          currency,
-          marketplace,
-          marketplaceLogo: '🛒',
+          title, productName: title,
+          model: '', color: '',
+          price: rawPrice, originalPrice: rawPrice,
+          currency, marketplace, marketplaceLogo: '🛒',
           listingUrl: directUrl,
           condition: item.second_hand_condition ? 'Used' : ('New' as const),
           location: country,
           stockStatus: 'In Stock' as const,
-          sellerRating: typeof item.rating === 'number' ? item.rating : 4.5,
-          sellerReviews: typeof item.reviews === 'number' ? item.reviews : 0,
+          sellerRating: rating || 4.5,
+          sellerReviews: reviews,
           deliveryDays: delivery.days,
           deliveryDate: delivery.date,
           shippingTier: delivery.tier,
           shippingCost: delivery.cost,
-          freeReturns: false,
+          freeReturns: hasReturns,
           imageUrl: item.thumbnail || '',
-          priceHistory: [],
+          priceHistory,
+          trustScore,
+          trustLabel,
           deliveryOptions: [{ tier: delivery.tier, days: delivery.days, cost: delivery.cost }],
           rawDelivery: String(item.delivery || ''),
         };
       })
     );
+
+    // Store today's prices for history (non-blocking)
+    storePriceHistory(listings, query).catch(() => {});
 
     return NextResponse.json({ listings });
   } catch (err) {
