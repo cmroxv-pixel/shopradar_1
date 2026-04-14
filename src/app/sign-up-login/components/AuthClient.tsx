@@ -1,379 +1,277 @@
 'use client';
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import AppLogo from '@/components/ui/AppLogo';
-import { Eye, EyeOff, Loader2, Bell, Bookmark, Search, Globe, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import Link from 'next/link';
 
-type Tab = 'login' | 'signup';
+// ── Dot canvas shader ──────────────────────────────────────
+type Uniforms = Record<string, { value: number[] | number[][] | number; type: string }>;
 
-interface LoginForm {
-  email: string;
-  password: string;
-  remember: boolean;
-}
+const ShaderMesh = ({ source, uniforms }: { source: string; uniforms: Uniforms }) => {
+  const { size } = useThree();
+  const ref = useRef<THREE.Mesh>(null);
 
-interface SignupForm {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  terms: boolean;
-}
-
-function LoginForm() {
-  const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
-  const router = useRouter();
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({ defaultValues: { remember: false } });
-
-  const onSubmit = async (data: LoginForm) => {
-    setLoading(true);
-    try {
-      await signIn(data.email, data.password);
-      toast.success('Welcome back! Redirecting...');
-      router.push('/watchlist-price-alerts');
-      router.refresh();
-    } catch (err: any) {
-      toast.error(err?.message || 'Invalid credentials. Please try again.');
-    } finally {
-      setLoading(false);
+  const material = useMemo(() => {
+    const prepared: any = {};
+    for (const k in uniforms) {
+      const u: any = uniforms[k];
+      if (u.type === 'uniform1f') prepared[k] = { value: u.value };
+      else if (u.type === 'uniform1i') prepared[k] = { value: u.value };
+      else if (u.type === 'uniform1fv') prepared[k] = { value: u.value };
+      else if (u.type === 'uniform3fv') prepared[k] = { value: (u.value as number[][]).map((v: number[]) => new THREE.Vector3().fromArray(v)) };
     }
-  };
+    prepared['u_time'] = { value: 0 };
+    prepared['u_resolution'] = { value: new THREE.Vector2(size.width * 2, size.height * 2) };
+
+    return new THREE.ShaderMaterial({
+      vertexShader: `precision mediump float; uniform vec2 u_resolution; out vec2 fragCoord; void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); fragCoord = (position.xy + vec2(1.0)) * 0.5 * u_resolution; fragCoord.y = u_resolution.y - fragCoord.y; }`,
+      fragmentShader: source,
+      uniforms: prepared,
+      glslVersion: THREE.GLSL3,
+      blending: THREE.CustomBlending,
+      blendSrc: THREE.SrcAlphaFactor,
+      blendDst: THREE.OneFactor,
+    });
+  }, [size.width, size.height, source]);
+
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    (ref.current.material as any).uniforms.u_time.value = clock.getElapsedTime();
+  });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Google OAuth */}
-      <button
-        type="button"
-        onClick={() => toast.info('Google OAuth — connect Supabase Auth provider')}
-        className="w-full flex items-center justify-center gap-2 py-2.5 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-all duration-150 active:scale-95"
-      >
-        <Globe size={16} className="text-muted-foreground" />
-        Continue with Google
-      </button>
-
-      <div className="flex items-center gap-3">
-        <hr className="flex-1 border-border" />
-        <span className="text-xs text-muted-foreground">or sign in with email</span>
-        <hr className="flex-1 border-border" />
-      </div>
-
-      {/* Email */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">Email address</label>
-        <input
-          type="email"
-          {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Enter a valid email' } })}
-          placeholder="maya@example.com"
-          className={`w-full px-3 py-2.5 bg-muted/50 border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-150 ${errors.email ? 'border-destructive' : 'border-border'}`}
-        />
-        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
-      </div>
-
-      {/* Password */}
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium text-foreground">Password</label>
-          <button type="button" className="text-xs text-primary hover:underline">Forgot password?</button>
-        </div>
-        <div className="relative">
-          <input
-            type={showPwd ? 'text' : 'password'}
-            {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'At least 6 characters' } })}
-            placeholder="••••••••"
-            className={`w-full px-3 py-2.5 pr-10 bg-muted/50 border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-150 ${errors.password ? 'border-destructive' : 'border-border'}`}
-          />
-          <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-            {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
-        </div>
-        {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
-      </div>
-
-      {/* Remember me */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input type="checkbox" {...register('remember')} className="w-4 h-4 rounded border-border accent-primary" />
-        <span className="text-sm text-muted-foreground">Remember me for 30 days</span>
-      </label>
-
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-lg text-sm font-semibold hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all duration-150"
-      >
-        {loading ? <><Loader2 size={15} className="animate-spin" /> Signing in...</> : 'Sign in'}
-      </button>
-    </form>
+    <mesh ref={ref as any}>
+      <planeGeometry args={[2, 2]} />
+      <primitive object={material} attach="material" />
+    </mesh>
   );
-}
+};
 
-function SignupForm() {
+const DotCanvas = ({ reverse = false }: { reverse?: boolean }) => {
+  const uniforms = useMemo(() => ({
+    u_colors: {
+      value: [[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]],
+      type: 'uniform3fv',
+    },
+    u_opacities: { value: [0.3,0.3,0.3,0.5,0.5,0.5,0.8,0.8,0.8,1], type: 'uniform1fv' },
+    u_total_size: { value: 20, type: 'uniform1f' },
+    u_dot_size: { value: 4, type: 'uniform1f' },
+    u_reverse: { value: reverse ? 1 : 0, type: 'uniform1i' },
+  }), [reverse]);
+
+  const source = `
+    precision mediump float;
+    in vec2 fragCoord;
+    uniform float u_time;
+    uniform float u_opacities[10];
+    uniform vec3 u_colors[6];
+    uniform float u_total_size;
+    uniform float u_dot_size;
+    uniform vec2 u_resolution;
+    uniform int u_reverse;
+    out vec4 fragColor;
+    float PHI = 1.61803398874989484820459;
+    float random(vec2 xy){ return fract(tan(distance(xy*PHI,xy)*0.5)*xy.x); }
+    void main(){
+      vec2 st = fragCoord.xy;
+      st.x -= abs(floor((mod(u_resolution.x,u_total_size)-u_dot_size)*0.5));
+      st.y -= abs(floor((mod(u_resolution.y,u_total_size)-u_dot_size)*0.5));
+      float opacity = step(0.0,st.x)*step(0.0,st.y);
+      vec2 st2 = vec2(int(st.x/u_total_size),int(st.y/u_total_size));
+      float show_offset = random(st2);
+      float rand = random(st2*floor((u_time/5.0)+show_offset+5.0));
+      opacity *= u_opacities[int(rand*10.0)];
+      opacity *= 1.0-step(u_dot_size/u_total_size,fract(st.x/u_total_size));
+      opacity *= 1.0-step(u_dot_size/u_total_size,fract(st.y/u_total_size));
+      vec3 color = u_colors[int(show_offset*6.0)];
+      float speed = 0.5;
+      vec2 center_grid = u_resolution/2.0/u_total_size;
+      float dist = distance(center_grid,st2);
+      float max_dist = distance(center_grid,vec2(0.0));
+      float offset = u_reverse==1 ? (max_dist-dist)*0.02+random(st2+42.0)*0.2 : dist*0.01+random(st2)*0.15;
+      if(u_reverse==1){ opacity *= 1.0-step(offset,u_time*speed); }
+      else { opacity *= step(offset,u_time*speed); }
+      fragColor = vec4(color,opacity);
+      fragColor.rgb *= fragColor.a;
+    }`;
+
+  return (
+    <Canvas style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+      <ShaderMesh source={source} uniforms={uniforms} />
+    </Canvas>
+  );
+};
+
+// ── Sign-in form ───────────────────────────────────────────
+export default function AuthClient() {
+  const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const [reverseCanvas, setReverseCanvas] = useState(false);
+  const { signIn, signUp } = useAuth();
   const router = useRouter();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<SignupForm>();
-  const pwd = watch('password', '');
 
-  const onSubmit = async (data: SignupForm) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      await signUp(data.email, data.password, { fullName: data.name });
-      toast.success('Account created! Signing you in...');
-      router.push('/watchlist-price-alerts');
-      router.refresh();
+      await signIn(email, password);
+      setReverseCanvas(true);
+      toast.success('Welcome back!');
+      setTimeout(() => router.push('/watchlist-price-alerts'), 1000);
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to create account. Please try again.');
+      toast.error(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const passwordStrength = (p: string) => {
-    if (!p) return 0;
-    let score = 0;
-    if (p.length >= 8) score++;
-    if (/[A-Z]/.test(p)) score++;
-    if (/[0-9]/.test(p)) score++;
-    if (/[^A-Za-z0-9]/.test(p)) score++;
-    return score;
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) { toast.error('Passwords do not match'); return; }
+    setLoading(true);
+    try {
+      await signUp(email, password, name);
+      setReverseCanvas(true);
+      toast.success('Account created!');
+      setTimeout(() => router.push('/watchlist-price-alerts'), 1000);
+    } catch (err: any) {
+      toast.error(err.message || 'Sign up failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const strength = passwordStrength(pwd);
-  const strengthColors = ['', 'bg-destructive', 'bg-warning', 'bg-accent', 'bg-success'];
-  const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Google OAuth */}
-      <button
-        type="button"
-        onClick={() => toast.info('Google OAuth — connect Supabase Auth provider')}
-        className="w-full flex items-center justify-center gap-2 py-2.5 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-all duration-150 active:scale-95"
-      >
-        <Globe size={16} className="text-muted-foreground" />
-        Sign up with Google
-      </button>
+    <div style={{ minHeight: '100vh', background: '#000', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <Toaster position="bottom-right" toastOptions={{ style: { background: '#111', border: '1px solid #333', color: 'white', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 13 } }} />
 
-      <div className="flex items-center gap-3">
-        <hr className="flex-1 border-border" />
-        <span className="text-xs text-muted-foreground">or create with email</span>
-        <hr className="flex-1 border-border" />
+      {/* Dot canvas background */}
+      <div style={{ position: 'absolute', inset: 0 }}>
+        {!reverseCanvas && <DotCanvas reverse={false} />}
+        {reverseCanvas && <DotCanvas reverse={true} />}
+        {/* Radial fade from center */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, rgba(0,0,0,0.85) 0%, transparent 70%)' }} />
+        {/* Top + bottom fades */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '30%', background: 'linear-gradient(to bottom, black, transparent)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '20%', background: 'linear-gradient(to top, black, transparent)' }} />
       </div>
 
-      {/* Name */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">Full name</label>
-        <input
-          type="text"
-          {...register('name', { required: 'Name is required' })}
-          placeholder="Maya Chen"
-          className={`w-full px-3 py-2.5 bg-muted/50 border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-150 ${errors.name ? 'border-destructive' : 'border-border'}`}
-        />
-        {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>}
-      </div>
-
-      {/* Email */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">Email address</label>
-        <input
-          type="email"
-          {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Enter a valid email' } })}
-          placeholder="maya@example.com"
-          className={`w-full px-3 py-2.5 bg-muted/50 border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-150 ${errors.email ? 'border-destructive' : 'border-border'}`}
-        />
-        {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
-      </div>
-
-      {/* Password */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
-        <p className="text-xs text-muted-foreground mb-1.5">At least 8 characters with a number and symbol</p>
-        <div className="relative">
-          <input
-            type={showPwd ? 'text' : 'password'}
-            {...register('password', {
-              required: 'Password is required',
-              minLength: { value: 8, message: 'At least 8 characters required' },
-            })}
-            placeholder="••••••••"
-            className={`w-full px-3 py-2.5 pr-10 bg-muted/50 border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-150 ${errors.password ? 'border-destructive' : 'border-border'}`}
-          />
-          <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-            {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
+      {/* Card */}
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 400, padding: '0 20px' }}>
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <Link href="/product-search-results" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'hsl(218 100% 50%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="4.5" cy="8" r="3" fill="white" opacity="0.95"/>
+                <circle cx="11.5" cy="4.5" r="2.2" fill="white" opacity="0.8"/>
+                <circle cx="11.5" cy="11.5" r="2.2" fill="white" opacity="0.8"/>
+                <line x1="7.4" y1="7" x2="9.4" y2="5.3" stroke="white" strokeWidth="1.1" opacity="0.6"/>
+                <line x1="7.4" y1="9" x2="9.4" y2="10.7" stroke="white" strokeWidth="1.1" opacity="0.6"/>
+              </svg>
+            </div>
+            <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 18, color: 'white', letterSpacing: '-0.02em' }}>ShopRadar</span>
+          </Link>
         </div>
-        {errors.password && <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>}
-        {pwd && (
-          <div className="mt-2">
-            <div className="flex gap-1 mb-1">
-              {[1,2,3,4].map(i => (
-                <div key={`strength-bar-${i}`} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= strength ? strengthColors[strength] : 'bg-muted'}`} />
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Headline */}
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 800, fontSize: 32, color: 'white', letterSpacing: '-0.03em', marginBottom: 6, lineHeight: 1.1 }}>
+                {tab === 'login' ? 'Welcome back' : 'Get started'}
+              </h1>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                {tab === 'login' ? 'Sign in to your ShopRadar account' : 'Create your free account'}
+              </p>
+            </div>
+
+            {/* Tab switcher */}
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 100, padding: 3, marginBottom: 24, border: '1px solid rgba(255,255,255,0.08)' }}>
+              {(['login', 'signup'] as const).map(t => (
+                <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '8px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", transition: 'all 0.2s', background: tab === t ? 'white' : 'transparent', color: tab === t ? 'black' : 'rgba(255,255,255,0.5)' }}>
+                  {t === 'login' ? 'Sign in' : 'Sign up'}
+                </button>
               ))}
             </div>
-            <p className={`text-xs ${strength >= 3 ? 'text-success' : strength === 2 ? 'text-warning' : 'text-destructive'}`}>
-              {strengthLabels[strength]}
-            </p>
-          </div>
-        )}
-      </div>
 
-      {/* Confirm password */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-1.5">Confirm password</label>
-        <div className="relative">
-          <input
-            type={showConfirm ? 'text' : 'password'}
-            {...register('confirmPassword', {
-              required: 'Please confirm your password',
-              validate: v => v === pwd || 'Passwords do not match',
-            })}
-            placeholder="••••••••"
-            className={`w-full px-3 py-2.5 pr-10 bg-muted/50 border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-150 ${errors.confirmPassword ? 'border-destructive' : 'border-border'}`}
-          />
-          <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-            {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
-        </div>
-        {errors.confirmPassword && <p className="mt-1 text-xs text-destructive">{errors.confirmPassword.message}</p>}
-      </div>
-
-      {/* Terms */}
-      <div>
-        <label className="flex items-start gap-2 cursor-pointer">
-          <input type="checkbox" {...register('terms', { required: 'You must accept the terms' })} className="mt-0.5 w-4 h-4 rounded border-border accent-primary" />
-          <span className="text-sm text-muted-foreground">
-            I agree to the{' '}
-            <a href="#" className="text-primary hover:underline">Terms of Service</a>
-            {' '}and{' '}
-            <a href="#" className="text-primary hover:underline">Privacy Policy</a>
-          </span>
-        </label>
-        {errors.terms && <p className="mt-1 text-xs text-destructive">{errors.terms.message}</p>}
-      </div>
-
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-lg text-sm font-semibold hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all duration-150"
-      >
-        {loading ? <><Loader2 size={15} className="animate-spin" /> Creating account...</> : 'Create free account'}
-      </button>
-    </form>
-  );
-}
-
-const BENEFITS = [
-  { icon: Bell, label: 'Price Drop Alerts', desc: 'Get emailed the moment a product hits your target price' },
-  { icon: Bookmark, label: 'Saved Watchlists', desc: 'Track products across marketplaces from one place' },
-  { icon: Search, label: 'Search History', desc: 'Pick up where you left off — your recent searches saved' },
-  { icon: Globe, label: '40+ Marketplaces', desc: 'Amazon, eBay, Currys, JB Hi-Fi, boutique stores & more' },
-  { icon: ShieldCheck, label: 'In-Stock Only', desc: 'Only see listings confirmed in stock — no phantom results' },
-];
-
-export default function AuthClient() {
-  const [tab, setTab] = useState<Tab>('login');
-
-  return (
-    <div className="min-h-screen bg-background flex">
-      <Toaster position="bottom-right" richColors />
-
-      {/* Left panel — brand & benefits */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full border-2 border-white" />
-          <div className="absolute top-1/3 left-1/3 w-96 h-96 rounded-full border border-white" />
-          <div className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full border-2 border-white" />
-        </div>
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
-            <AppLogo size={44} />
-            <span className="text-2xl font-bold text-white">ShopRadar</span>
-          </div>
-          <h2 className="text-4xl font-bold text-white leading-snug mb-4">
-            Find any product.<br />Best price, fastest delivery.
-          </h2>
-          <p className="text-white/70 text-lg">
-            Sign in to save your searches, set price alerts, and never miss a deal across 40+ global marketplaces.
-          </p>
-        </div>
-
-        <div className="relative z-10 space-y-4">
-          {BENEFITS.map(b => (
-            <div key={`benefit-${b.label}`} className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                <b.icon size={16} className="text-white" />
+            {/* Form */}
+            <form onSubmit={tab === 'login' ? handleLogin : handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {tab === 'signup' && (
+                <input
+                  type="text" placeholder="Full name" value={name}
+                  onChange={e => setName(e.target.value)} required
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+                />
+              )}
+              <input
+                type="email" placeholder="Email address" value={email}
+                onChange={e => setEmail(e.target.value)} required
+                style={{ width: '100%', padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
+                onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPwd ? 'text' : 'password'} placeholder="Password" value={password}
+                  onChange={e => setPassword(e.target.value)} required
+                  style={{ width: '100%', padding: '12px 44px 12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+                />
+                <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 0 }}>
+                  {showPwd ? (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/><path d="M2 2l12 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/></svg>
+                  )}
+                </button>
               </div>
-              <div>
-                <p className="text-white font-semibold text-sm">{b.label}</p>
-                <p className="text-white/60 text-xs">{b.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+              {tab === 'signup' && (
+                <input
+                  type="password" placeholder="Confirm password" value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)} required
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+                />
+              )}
 
-      {/* Right panel — auth form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 overflow-y-auto">
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <AppLogo size={36} />
-            <span className="text-xl font-bold text-foreground">ShopRadar</span>
-          </div>
-
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-foreground">
-              {tab === 'login' ? 'Welcome back' : 'Create your account'}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {tab === 'login' ?'Sign in to access your watchlists and price alerts' :'Start tracking deals across 40+ global marketplaces — free forever'}
-            </p>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex bg-muted rounded-xl p-1 mb-6">
-            {(['login', 'signup'] as Tab[]).map(t => (
-              <button
-                key={`tab-${t}`}
-                onClick={() => setTab(t)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              <button type="submit" disabled={loading} style={{ width: '100%', padding: '13px', borderRadius: 100, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: '-0.01em', background: loading ? 'rgba(255,255,255,0.3)' : 'white', color: 'black', marginTop: 6, transition: 'all 0.15s' }}
+                onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.88)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = loading ? 'rgba(255,255,255,0.3)' : 'white'; }}
               >
-                {t === 'login' ? 'Sign in' : 'Sign up'}
+                {loading ? 'Please wait…' : tab === 'login' ? 'Sign in →' : 'Create account →'}
               </button>
-            ))}
-          </div>
+            </form>
 
-          {tab === 'login' ? <LoginForm /> : <SignupForm />}
-
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            {tab === 'login' ? (
-              <>Don&apos;t have an account?{' '}
-                <button onClick={() => setTab('signup')} className="text-primary hover:underline font-medium">Create one free</button>
-              </>
-            ) : (
-              <>Already have an account?{' '}
-                <button onClick={() => setTab('login')} className="text-primary hover:underline font-medium">Sign in</button>
-              </>
+            {tab === 'login' && (
+              <p style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                Don't have an account?{' '}
+                <button onClick={() => setTab('signup')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>
+                  Sign up
+                </button>
+              </p>
             )}
-          </p>
-
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            <Link href="/product-search-results" className="text-muted-foreground hover:text-foreground underline underline-offset-2">
-              Continue without an account →
-            </Link>
-          </p>
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
