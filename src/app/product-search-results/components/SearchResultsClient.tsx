@@ -268,47 +268,65 @@ export default function SearchResultsClient() {
       <section style={{ overflow: 'hidden', paddingBottom: 0 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '64px 24px 0', position: 'relative', zIndex: 2 }}>
 
-          {/* Badge */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 14px', borderRadius: 100, background: 'hsl(var(--primary) / 0.08)', border: '1px solid hsl(var(--primary) / 0.15)', fontSize: 12, color: 'hsl(var(--primary))', fontWeight: 600 }}>
+          {/* Badge — fade up */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28, animation: 'heroFadeUp 0.9s 0.1s cubic-bezier(0.25,0.4,0.25,1) both' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 16px', borderRadius: 100, background: 'hsl(var(--primary) / 0.06)', border: '1px solid hsl(var(--primary) / 0.15)', fontSize: 12, color: 'hsl(var(--primary))', fontWeight: 600, letterSpacing: '0.01em' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'hsl(var(--primary))', display: 'inline-block' }} />
               Real-time prices from 40+ global marketplaces
             </div>
           </div>
 
-          {/* Headline */}
+          {/* Headline — HeroGeometric style gradient */}
           <h1 style={{
             textAlign: 'center',
             fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
             fontWeight: 800,
-            fontSize: 'clamp(36px, 6vw, 76px)',
-            letterSpacing: '-0.03em',
+            fontSize: 'clamp(42px, 7vw, 88px)',
+            letterSpacing: '-0.04em',
             lineHeight: 1.0,
-            marginBottom: 20,
-            color: 'hsl(var(--foreground))',
+            marginBottom: 24,
+            animation: 'heroFadeUp 1s 0.3s cubic-bezier(0.25,0.4,0.25,1) both',
           }}>
-            Find the best price,<br />
-            <span style={{ color: 'hsl(var(--primary))' }}>anywhere.</span>
+            <span style={{
+              display: 'block',
+              backgroundImage: 'linear-gradient(to bottom, hsl(var(--foreground)), hsl(var(--foreground) / 0.8))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              Find the best price,
+            </span>
+            <span style={{
+              display: 'block',
+              backgroundImage: 'linear-gradient(to right, hsl(218 100% 65%), hsl(var(--foreground) / 0.9), hsl(218 100% 70%))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              anywhere.
+            </span>
           </h1>
 
-          {/* Subtext */}
+          {/* Subtext — fade up */}
           <p style={{
             textAlign: 'center',
             fontSize: 18,
             color: 'hsl(var(--muted-foreground))',
-            lineHeight: 1.6,
-            maxWidth: 520,
-            margin: '0 auto 32px',
-            fontWeight: 400,
+            lineHeight: 1.65,
+            maxWidth: 500,
+            margin: '0 auto 36px',
+            fontWeight: 300,
+            letterSpacing: '0.01em',
+            animation: 'heroFadeUp 1s 0.5s cubic-bezier(0.25,0.4,0.25,1) both',
           }}>
             ShopRadar scans Amazon, eBay, JB Hi-Fi, Kogan and dozens more — showing you the cheapest price with real delivery dates to your door.
           </p>
 
           {/* CTA button */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 48 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 52, animation: 'heroFadeUp 1s 0.65s cubic-bezier(0.25,0.4,0.25,1) both' }}>
             <button
               className="btn-primary"
-              style={{ fontSize: 16, padding: '13px 32px' }}
+              style={{ fontSize: 16, padding: '13px 36px' }}
               onClick={() => searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
             >
               Start comparing →
