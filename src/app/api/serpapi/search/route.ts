@@ -16,34 +16,28 @@ async function getDirectUrlFromImmersiveApi(
   serpApiKey: string
 ): Promise<string> {
   try {
-    // The immersive URL from SerpAPI doesn't include the api_key — we must add it
     const urlWithKey = `${immersiveApiUrl}&api_key=${serpApiKey}`;
-
     const res = await fetch(urlWithKey);
     if (!res.ok) return '';
     const data = await res.json();
 
-    const sellers: any[] =
-      data?.sellers_results?.online_sellers ||
-      data?.buying_options ||
-      data?.offers ||
-      [];
-
-    if (sellers.length === 0) return '';
+    // The correct field is product_results.stores (not sellers_results)
+    const stores: any[] = data?.product_results?.stores || [];
+    if (stores.length === 0) return '';
 
     const mLower = marketplace.toLowerCase().replace(/\s*-\s*.+$/, '').trim();
 
-    // Try to match the specific marketplace first
-    for (const seller of sellers) {
-      const name = (seller.name || seller.seller || seller.store || '').toLowerCase();
-      const link = seller.link || seller.url || seller.base_price_link || '';
+    // Try to find the specific marketplace store first
+    for (const store of stores) {
+      const name = (store.name || '').toLowerCase();
+      const link = store.link || '';
       if (!link || isGoogleUrl(link)) continue;
       if (name.includes(mLower) || mLower.includes(name)) return link;
     }
 
-    // Return first valid direct link from any seller
-    for (const seller of sellers) {
-      const link = seller.link || seller.url || seller.base_price_link || '';
+    // Return the first valid direct store link
+    for (const store of stores) {
+      const link = store.link || '';
       if (link && !isGoogleUrl(link)) return link;
     }
 
@@ -126,7 +120,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing SERPAPI_KEY' }, { status: 500 });
 
   try {
-    // Step 1: Google Shopping search
     const shoppingParams = new URLSearchParams({
       engine: 'google_shopping',
       q: query,
@@ -150,7 +143,6 @@ export async function GET(req: NextRequest) {
     const currency = country === 'au' ? 'AUD' : country === 'gb' ? 'GBP' :
       country === 'us' ? 'USD' : country === 'eu' ? 'EUR' : 'AUD';
 
-    // Step 2: Resolve direct URLs using the immersive product API (with api_key appended)
     const topResults = rawResults.slice(0, 15);
 
     const listings = await Promise.all(
@@ -165,7 +157,6 @@ export async function GET(req: NextRequest) {
 
         const immersiveUrl: string = item.serpapi_immersive_product_api || '';
         if (immersiveUrl) {
-          // Pass the api_key so the call doesn't return 401
           directUrl = await getDirectUrlFromImmersiveApi(immersiveUrl, marketplace, serpApiKey);
         }
 
