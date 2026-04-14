@@ -2,12 +2,11 @@
 import React, { useEffect, useState } from 'react';
 
 export default function ModeToggle() {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Read saved preference, default to dark
     const saved = localStorage.getItem('shopradar-mode');
-    const dark = saved !== 'light';
+    const dark = saved === 'dark';
     setIsDark(dark);
     applyMode(dark);
   }, []);
@@ -15,9 +14,9 @@ export default function ModeToggle() {
   function applyMode(dark: boolean) {
     const html = document.documentElement;
     if (dark) {
-      html.removeAttribute('data-mode');
+      html.setAttribute('data-mode', 'dark');
     } else {
-      html.setAttribute('data-mode', 'light');
+      html.removeAttribute('data-mode');
     }
   }
 
@@ -33,42 +32,34 @@ export default function ModeToggle() {
       onClick={toggle}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       style={{
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        border: '1px solid hsl(var(--border))',
-        background: 'transparent',
+        width: 34, height: 34, borderRadius: '50%',
+        border: '1.5px solid hsl(var(--border))',
+        background: 'hsl(var(--card))',
         color: 'hsl(var(--muted-foreground))',
         cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'all 0.15s',
         flexShrink: 0,
       }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLButtonElement;
-        el.style.borderColor = 'hsl(var(--primary) / 0.4)';
+        el.style.borderColor = 'hsl(var(--primary))';
         el.style.color = 'hsl(var(--primary))';
-        el.style.background = 'hsl(var(--primary) / 0.08)';
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLButtonElement;
         el.style.borderColor = 'hsl(var(--border))';
         el.style.color = 'hsl(var(--muted-foreground))';
-        el.style.background = 'transparent';
       }}
     >
       {isDark ? (
-        // Sun icon
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.4"/>
-          <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <circle cx="7.5" cy="7.5" r="2.8" stroke="currentColor" strokeWidth="1.4"/>
+          <path d="M7.5 1v1.2M7.5 12.8V14M1 7.5h1.2M12.8 7.5H14M3.1 3.1l.85.85M11.05 11.05l.85.85M3.1 11.9l.85-.85M11.05 3.95l.85-.85" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
         </svg>
       ) : (
-        // Moon icon
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-          <path d="M12.5 9.5A6 6 0 015.5 2.5a6 6 0 100 10 6 6 0 007-3z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M12 8.5A5.5 5.5 0 015.5 2a5.5 5.5 0 100 10A5.5 5.5 0 0012 8.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
         </svg>
       )}
     </button>
