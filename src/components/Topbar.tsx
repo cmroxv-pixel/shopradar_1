@@ -15,7 +15,7 @@ export default function Topbar() {
         {/* Logo */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <Image
-            src="/logo.png"
+            src="/logo.webp"
             alt="ShopRadar"
             width={32}
             height={32}
