@@ -1,381 +1,333 @@
 'use client';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
-import SearchBar from './SearchBar';
 import AddressSelector from './AddressSelector';
-import FilterPanel from './FilterPanel';
 import ResultsGrid from './ResultsGrid';
 import ComparisonDrawer from './ComparisonDrawer';
-import ThemeSwitcherPanel from './ThemeSwitcherPanel';
-import CurrencyConverter from './CurrencyConverter';
-import CategoryFilter from './CategoryFilter';
 import { type Listing } from './mockData';
-import { SlidersHorizontal, Palette, TrendingDown, Zap, Globe, ChevronDown } from 'lucide-react';
 
-const SEARCH_STEPS = [
-  { message: 'Searching Google Shopping…', progress: 10 },
-  { message: 'Finding listings across 40+ marketplaces…', progress: 25 },
-  { message: 'Resolving direct product URLs…', progress: 45 },
-  { message: 'Fetching store pages for each result…', progress: 60 },
-  { message: 'Comparing prices & delivery times…', progress: 75 },
-  { message: 'Almost there — finalising results…', progress: 90 },
+const STEPS = [
+  { msg: 'Querying Google Shopping…',          pct: 12 },
+  { msg: 'Scanning 40+ global marketplaces…',  pct: 28 },
+  { msg: 'Resolving direct product URLs…',     pct: 46 },
+  { msg: 'Fetching individual store pages…',   pct: 63 },
+  { msg: 'Comparing prices & delivery times…', pct: 78 },
+  { msg: 'Finalising results…',                pct: 92 },
 ];
 
-function StatusBar({ isSearching, query }: { isSearching: boolean; query: string }) {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+const CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'electronics', label: 'Electronics' },
+  { id: 'gaming', label: 'Gaming' },
+  { id: 'clothing', label: 'Clothing' },
+  { id: 'home', label: 'Home' },
+  { id: 'sports', label: 'Sports' },
+  { id: 'books', label: 'Books' },
+];
 
+const SORT_OPTIONS = [
+  { id: 'price',     label: 'Cheapest' },
+  { id: 'delivery',  label: 'Fastest' },
+  { id: 'rating',    label: 'Top rated' },
+  { id: 'proximity', label: 'Nearest' },
+] as const;
+
+function StatusBar({ active, query }: { active: boolean; query: string }) {
+  const [step, setStep] = useState(0);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    if (isSearching) {
-      setStepIndex(0);
-      setProgress(SEARCH_STEPS[0].progress);
-
-      intervalRef.current = setInterval(() => {
-        setStepIndex(prev => {
-          const next = prev + 1;
-          if (next >= SEARCH_STEPS.length) {
-            // Stay on last step
-            setProgress(SEARCH_STEPS[SEARCH_STEPS.length - 1].progress);
-            return SEARCH_STEPS.length - 1;
-          }
-          setProgress(SEARCH_STEPS[next].progress);
-          return next;
-        });
-      }, 1200);
+    if (active) {
+      setStep(0);
+      timer.current = setInterval(() => setStep(p => Math.min(p + 1, STEPS.length - 1)), 1200);
     } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setProgress(0);
-      setStepIndex(0);
+      if (timer.current) clearInterval(timer.current);
+      setStep(0);
     }
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isSearching]);
-
-  if (!isSearching) return null;
-
-  const currentStep = SEARCH_STEPS[stepIndex];
-
+    return () => { if (timer.current) clearInterval(timer.current); };
+  }, [active]);
+  if (!active) return null;
   return (
-    <div className="mt-4 w-full bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-      {/* Top row */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <span className="animate-spin inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full shrink-0" />
-          <span className="text-sm font-medium text-foreground">{currentStep.message}</span>
+    <div style={{
+      marginTop: 20,
+      background: 'rgba(10,13,26,0.7)',
+      border: '1px solid rgba(99,120,255,0.18)',
+      borderRadius: 12,
+      overflow: 'hidden',
+      backdropFilter: 'blur(20px)',
+      animation: 'fadeUp 0.4s ease both',
+    }}>
+      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ display: 'inline-block', width: 13, height: 13, border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+          <span style={{ fontFamily: 'DM Sans', fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{STEPS[step].msg}</span>
         </div>
-        <span className="text-xs text-muted-foreground font-mono tabular-nums">{currentStep.progress}%</span>
+        <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-muted)' }}>{STEPS[step].pct}%</span>
       </div>
-
-      {/* Progress bar */}
-      <div className="h-1 w-full bg-muted">
-        <div
-          className="h-full bg-primary transition-all duration-700 ease-in-out rounded-full"
-          style={{ width: `${currentStep.progress}%` }}
-        />
+      <div style={{ height: 2, background: 'rgba(99,120,255,0.08)' }}>
+        <div style={{ height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--accent))', width: `${STEPS[step].pct}%`, transition: 'width 0.7s cubic-bezier(0.4,0,0.2,1)', borderRadius: 1 }} />
       </div>
-
-      {/* Bottom label */}
-      <div className="px-4 py-2 bg-muted/30">
-        <p className="text-xs text-muted-foreground">
-          Searching for <span className="font-semibold text-foreground">"{query}"</span> — this takes ~7 seconds
-        </p>
+      <div style={{ padding: '8px 16px', background: 'rgba(99,120,255,0.04)' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Searching for <strong style={{ color: 'var(--text)' }}>"{query}"</strong> — usually ~7s</span>
       </div>
     </div>
   );
 }
 
 export default function SearchResultsClient() {
-  const [query, setQuery] = useState({ name: '' });
+  const [searchText, setSearchText] = useState('');
+  const [query, setQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
   const [sortBy, setSortBy] = useState<'price' | 'delivery' | 'rating' | 'proximity'>('price');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
   const [compareItems, setCompareItems] = useState<Listing[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const [address, setAddress] = useState({ country: '', state: '', suburb: '', full: '' });
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  const [selectedMarketplaces, setSelectedMarketplaces] = useState<string[]>([]);
-  const [deliveryFilter, setDeliveryFilter] = useState<'any' | 'express' | '3days' | '7days'>('any');
-  const [minRating, setMinRating] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
-  const [resultsModalOpen, setResultsModalOpen] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState('AUD');
-  const [exchangeRate, setExchangeRate] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [resultsOpen, setResultsOpen] = useState(false);
+  const [category, setCategory] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
-  const fetchSerpApiResults = useCallback(async (productName: string, country: string): Promise<Listing[]> => {
+  const fetchResults = useCallback(async (name: string, country: string): Promise<Listing[]> => {
     try {
-      const params = new URLSearchParams({
-        q: productName,
-        country: country.slice(0, 2).toLowerCase(),
-      });
-      const res = await fetch(`/api/serpapi/search?${params.toString()}`);
+      const params = new URLSearchParams({ q: name, country: country.slice(0, 2).toLowerCase() });
+      const res = await fetch(`/api/serpapi/search?${params}`);
       if (!res.ok) return [];
       const data = await res.json();
-      if (data.error) {
-        console.error('SerpApi error:', data.error, data.detail);
-        return [];
-      }
-      if (!data.listings || !Array.isArray(data.listings)) return [];
+      if (data.error || !Array.isArray(data.listings)) return [];
       return data.listings as Listing[];
-    } catch (err) {
-      console.error('SerpApi fetch error:', err);
-      return [];
-    }
+    } catch { return []; }
   }, []);
 
-  const handleSearch = useCallback(async (q: typeof query) => {
-    if (!q.name.trim()) return;
-    if (!address.country) {
-      toast.error('Please select your location first');
-      return;
-    }
-
-    setQuery(q);
+  const handleSearch = useCallback(async () => {
+    const name = searchText.trim();
+    if (!name) return;
+    if (!address.country) { toast.error('Select your location first'); return; }
+    setQuery(name);
     setHasSearched(false);
     setListings([]);
     setIsSearching(true);
-
     try {
-      const results = await fetchSerpApiResults(q.name, address.country);
-
+      const results = await fetchResults(name, address.country);
       setListings(results);
       setHasSearched(true);
-      setResultsModalOpen(true);
-
-      if (results.length > 0) {
-        toast.success(`Found ${results.length} listing${results.length !== 1 ? 's' : ''} for "${q.name}"`);
-      } else {
-        toast.info('No listings found. Try a different search term or check your API keys.');
-      }
+      setResultsOpen(true);
+      if (results.length > 0) toast.success(`Found ${results.length} listing${results.length !== 1 ? 's' : ''}`);
+      else toast.info('No listings found — try a different term');
     } catch {
       setHasSearched(true);
       toast.error('Search failed. Please try again.');
     } finally {
       setIsSearching(false);
     }
-  }, [fetchSerpApiResults, address.country]);
+  }, [searchText, address.country, fetchResults]);
 
   const toggleCompare = useCallback((listing: Listing) => {
     setCompareItems(prev => {
-      const exists = prev.find(l => l.id === listing.id);
-      if (exists) return prev.filter(l => l.id !== listing.id);
-      if (prev.length >= 3) {
-        toast.error('You can compare up to 3 listings at once');
-        return prev;
-      }
+      if (prev.find(l => l.id === listing.id)) return prev.filter(l => l.id !== listing.id);
+      if (prev.length >= 3) { toast.error('Max 3 items to compare'); return prev; }
       const next = [...prev, listing];
       if (next.length >= 2) setCompareOpen(true);
       return next;
     });
   }, []);
 
-  const handleAddToWatchlist = useCallback((listing: Listing) => {
-    toast.success(`"${listing.productName}" added to your watchlist`);
-  }, []);
-
-  const handleCurrencyChange = useCallback((currency: string, rate: number) => {
-    setDisplayCurrency(currency);
-    setExchangeRate(rate);
-  }, []);
-
-  const sorted = [...listings].sort((a, b) => {
-    if (sortBy === 'price') return a.price - b.price;
-    if (sortBy === 'delivery') return a.deliveryDays - b.deliveryDays;
-    if (sortBy === 'proximity') {
-      const aDist = a.distanceKm ?? a.deliveryDays * 500;
-      const bDist = b.distanceKm ?? b.deliveryDays * 500;
-      return aDist - bDist;
-    }
-    return b.sellerRating - a.sellerRating;
-  }).filter(l => {
-    if (l.stockStatus === 'Out of Stock' || (l.stockStatus as string) === 'Unavailable') return false;
-    if (l.price <= 0) return false;
-    if (l.price < priceRange[0] || l.price > priceRange[1]) return false;
-    if (selectedMarketplaces.length > 0 && !selectedMarketplaces.includes(l.marketplace)) return false;
-    if (deliveryFilter === 'express' && l.shippingTier !== 'Express') return false;
-    if (deliveryFilter === '3days' && l.deliveryDays > 3) return false;
-    if (deliveryFilter === '7days' && l.deliveryDays > 7) return false;
-    if (l.sellerRating < minRating) return false;
-    return true;
-  });
+  const sorted = [...listings]
+    .sort((a, b) => {
+      if (sortBy === 'price') return a.price - b.price;
+      if (sortBy === 'delivery') return a.deliveryDays - b.deliveryDays;
+      if (sortBy === 'proximity') return (a.distanceKm ?? a.deliveryDays * 500) - (b.distanceKm ?? b.deliveryDays * 500);
+      return b.sellerRating - a.sellerRating;
+    })
+    .filter(l => {
+      if (l.stockStatus === 'Out of Stock' || (l.stockStatus as string) === 'Unavailable') return false;
+      if (l.price <= 0) return false;
+      const mn = parseFloat(minPrice) || 0;
+      const mx = parseFloat(maxPrice) || 999999;
+      if (l.price < mn || l.price > mx) return false;
+      return true;
+    });
 
   const inStock = sorted.filter(l => l.stockStatus !== 'Out of Stock');
-  const lowestPrice = inStock.length > 0 ? Math.min(...inStock.map(l => l.price)) : null;
+  const bestPrice = inStock.length > 0 ? Math.min(...inStock.map(l => l.price)) : null;
   const fastestDays = inStock.length > 0 ? Math.min(...inStock.map(l => l.deliveryDays)) : null;
 
   return (
-    <div className="min-h-screen">
-      <Toaster position="bottom-right" richColors />
+    <div style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+      <Toaster position="bottom-right" toastOptions={{
+        style: { background: 'rgba(10,13,26,0.95)', border: '1px solid rgba(99,120,255,0.2)', color: 'var(--text)', fontFamily: 'DM Sans, sans-serif', fontSize: 13 },
+      }} />
 
-      {/* Page Header */}
-      <div className="mb-6">
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">Product Search</h1>
-            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-              <Globe size={13} className="text-primary" />
-              Real-time prices from <span className="font-semibold text-foreground">global marketplaces</span> via Google Shopping
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <CurrencyConverter
-              selectedCurrency={displayCurrency}
-              onCurrencyChange={handleCurrencyChange}
-            />
-            <button
-              onClick={() => { setFilterOpen(!filterOpen); setThemeOpen(false); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${filterOpen ? 'bg-primary text-white border-primary shadow-md shadow-primary/20' : 'bg-card text-foreground border-border hover:bg-muted hover:border-primary/30'}`}
-            >
-              <SlidersHorizontal size={14} />
-              Filters
-              {(selectedMarketplaces.length > 0 || deliveryFilter !== 'any' || minRating > 0) && (
-                <span className="ml-0.5 w-4 h-4 rounded-full bg-white/30 text-[10px] font-bold flex items-center justify-center">
-                  {[selectedMarketplaces.length > 0, deliveryFilter !== 'any', minRating > 0].filter(Boolean).length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => { setThemeOpen(!themeOpen); setFilterOpen(false); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200 ${themeOpen ? 'bg-primary text-white border-primary shadow-md shadow-primary/20' : 'bg-card text-foreground border-border hover:bg-muted hover:border-primary/30'}`}
-            >
-              <Palette size={14} />
-              Theme
-            </button>
-          </div>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px 120px' }}>
+
+        {/* Hero */}
+        <div style={{ textAlign: 'center', marginBottom: 36, animation: 'fadeUp 0.5s ease both' }}>
+          <h1 style={{
+            fontFamily: 'Syne, sans-serif', fontWeight: 800,
+            fontSize: 'clamp(26px, 6vw, 46px)', letterSpacing: '-0.025em', lineHeight: 1.1,
+            background: 'linear-gradient(135deg, #fff 20%, rgba(139,159,255,0.95) 60%, rgba(192,132,252,0.85) 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            marginBottom: 10,
+          }}>
+            Find the best price.<br />Anywhere.
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.7 }}>
+            Real-time prices from 40+ global marketplaces, delivered to you.
+          </p>
         </div>
 
-        {/* Category filters */}
-        <div className="mt-4">
-          <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
+        {/* Location */}
+        <div style={{ marginBottom: 10, animation: 'fadeUp 0.5s ease 0.1s both' }}>
+          <AddressSelector value={address} onChange={setAddress} />
+        </div>
+
+        {/* Search bar */}
+        <div style={{ animation: 'fadeUp 0.5s ease 0.15s both' }}>
+          <div style={{
+            display: 'flex', gap: 8,
+            background: 'rgba(10,13,26,0.75)',
+            border: '1px solid var(--border)',
+            borderRadius: 12, padding: 6,
+            backdropFilter: 'blur(20px)',
+          }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 10 }}>
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M10 10L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <input
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                placeholder={address.country ? 'Search any product…' : 'Set your location first…'}
+                disabled={!address.country || isSearching}
+                style={{ background: 'none', border: 'none', outline: 'none', flex: 1, fontSize: 14, color: 'var(--text)', fontFamily: 'DM Sans, sans-serif', padding: '6px 0' }}
+              />
+              {searchText && !isSearching && (
+                <button onClick={() => setSearchText('')} style={{ color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 6px', lineHeight: 1 }}>
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 1l11 11M12 1L1 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+              )}
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={!address.country || isSearching || !searchText.trim()}
+              className="btn-primary"
+              style={{ flexShrink: 0, opacity: (!address.country || !searchText.trim()) ? 0.38 : 1, cursor: (!address.country || !searchText.trim()) ? 'not-allowed' : 'pointer' }}
+            >
+              {isSearching ? 'Searching…' : 'Search'}
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 8, textAlign: 'center' }}>
+            Scanning Amazon · eBay · JB Hi-Fi · Kogan · Cash Converters · CeX &amp; more
+          </p>
+        </div>
+
+        {/* Categories */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 18, animation: 'fadeUp 0.5s ease 0.2s both' }}>
+          {CATEGORIES.map(c => (
+            <button
+              key={c.id}
+              onClick={() => setCategory(c.id)}
+              style={{
+                fontSize: 12, padding: '5px 13px', borderRadius: 8,
+                border: '1px solid',
+                borderColor: category === c.id ? 'var(--primary)' : 'var(--border)',
+                background: category === c.id ? 'rgba(99,120,255,0.1)' : 'transparent',
+                color: category === c.id ? 'var(--primary)' : 'var(--text-muted)',
+                cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                fontWeight: category === c.id ? 600 : 400,
+                transition: 'all 0.15s',
+              }}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
 
         {/* Status bar */}
-        <StatusBar isSearching={isSearching} query={query.name} />
-      </div>
+        <StatusBar active={isSearching} query={query} />
 
-      {/* Search + Address section */}
-      <div className="space-y-3 mb-6">
-        <AddressSelector value={address} onChange={setAddress} />
-        <SearchBar initialQuery={query} onSearch={handleSearch} loading={isSearching} disabled={!address.country} />
-        {!address.country && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5 pl-1">
-            <Globe size={11} className="text-primary" />
-            Select your location above to enable search
-          </p>
+        {/* Results */}
+        {resultsOpen && hasSearched && (
+          <div style={{ marginTop: 28, animation: 'fadeUp 0.4s ease both' }}>
+
+            {/* Results meta row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {bestPrice !== null && (
+                  <span className="badge badge-success">Best A${bestPrice.toFixed(2)}</span>
+                )}
+                {fastestDays !== null && (
+                  <span className="badge badge-accent">{fastestDays}d delivery</span>
+                )}
+                <span className="badge badge-primary">{sorted.length} results</span>
+              </div>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {SORT_OPTIONS.map(s => (
+                  <button key={s.id} onClick={() => setSortBy(s.id)} style={{
+                    fontSize: 11, padding: '4px 10px', borderRadius: 6,
+                    border: '1px solid', borderColor: sortBy === s.id ? 'var(--primary)' : 'var(--border)',
+                    background: sortBy === s.id ? 'rgba(99,120,255,0.12)' : 'transparent',
+                    color: sortBy === s.id ? 'var(--primary)' : 'var(--text-muted)',
+                    cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: sortBy === s.id ? 600 : 400, transition: 'all 0.15s',
+                  }}>
+                    {s.label}
+                  </button>
+                ))}
+                <button onClick={() => setShowFilters(f => !f)} style={{
+                  fontSize: 11, padding: '4px 10px', borderRadius: 6,
+                  border: '1px solid', borderColor: showFilters ? 'var(--primary)' : 'var(--border)',
+                  background: showFilters ? 'rgba(99,120,255,0.1)' : 'transparent',
+                  color: showFilters ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s',
+                }}>
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 2.5h9M3 5.5h5M4.5 8.5h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                  Filter
+                </button>
+              </div>
+            </div>
+
+            {/* Filters */}
+            {showFilters && (
+              <div style={{
+                background: 'rgba(10,13,26,0.7)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '12px 14px', marginBottom: 14,
+                display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
+                animation: 'fadeUp 0.3s ease both',
+              }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Price</span>
+                <input type="number" placeholder="Min $" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ width: 76, padding: '5px 9px', fontSize: 12, borderRadius: 6 }} />
+                <span style={{ color: 'var(--text-dim)', fontSize: 12 }}>–</span>
+                <input type="number" placeholder="Max $" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ width: 76, padding: '5px 9px', fontSize: 12, borderRadius: 6 }} />
+                <button onClick={() => { setMinPrice(''); setMaxPrice(''); }} style={{ fontSize: 11, color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer' }}>Clear</button>
+              </div>
+            )}
+
+            <ResultsGrid
+              listings={sorted}
+              loading={isSearching}
+              hasSearched={hasSearched}
+              compareItems={compareItems}
+              onToggleCompare={toggleCompare}
+              onAddToWatchlist={(l) => toast.success(`"${l.productName}" added to watchlist`)}
+              displayCurrency="AUD"
+              exchangeRate={1}
+              selectedCategory={category}
+            />
+          </div>
         )}
       </div>
 
-      {/* Theme panel */}
-      {themeOpen && (
-        <ThemeSwitcherPanel onClose={() => setThemeOpen(false)} />
-      )}
-
-      {/* Filter sidebar */}
-      {filterOpen && (
-        <div className="mb-6 w-64">
-          <FilterPanel
-            priceRange={priceRange}
-            onPriceRange={setPriceRange}
-            selectedMarketplaces={selectedMarketplaces}
-            onMarketplaces={setSelectedMarketplaces}
-            deliveryFilter={deliveryFilter}
-            onDeliveryFilter={setDeliveryFilter}
-            minRating={minRating}
-            onMinRating={setMinRating}
-            onClose={() => setFilterOpen(false)}
-          />
-        </div>
-      )}
-
-      {/* Results Modal Overlay */}
-      {resultsModalOpen && hasSearched && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-background/60 backdrop-blur-md"
-            onClick={() => setResultsModalOpen(false)}
-          />
-          <div className="relative z-10 w-full max-w-5xl max-h-[85vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-              <div className="flex items-center gap-3 flex-wrap">
-                {!isSearching && inStock.length > 0 && (
-                  <>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 border border-success/20 rounded-lg text-xs font-medium text-success">
-                      <TrendingDown size={12} />
-                      Best price: <span className="font-bold">${lowestPrice?.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/10 border border-accent/20 rounded-lg text-xs font-medium text-accent">
-                      <Zap size={12} fill="currentColor" />
-                      Fastest: <span className="font-bold">{fastestDays} day{fastestDays !== 1 ? 's' : ''}</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg text-xs font-medium text-primary">
-                      <Globe size={12} />
-                      <span className="font-bold">{sorted.length}</span> listings found
-                    </div>
-                  </>
-                )}
-                {address.suburb && (
-                  <p className="text-xs text-muted-foreground">
-                    Delivering to <span className="font-medium text-foreground">{address.suburb}, {address.country}</span>
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => setResultsModalOpen(false)}
-                className="ml-4 p-2 rounded-xl bg-muted/60 hover:bg-muted border border-border text-muted-foreground hover:text-foreground transition-all duration-150 shrink-0"
-                aria-label="Close results"
-              >
-                <ChevronDown size={18} />
-              </button>
-            </div>
-
-            {/* Sort bar */}
-            <div className="flex items-center justify-end px-5 py-2.5 border-b border-border shrink-0 bg-muted/20">
-              <div className="flex items-center gap-1 bg-muted/60 border border-border rounded-xl p-1">
-                {(['proximity', 'price', 'delivery', 'rating'] as const).map(s => (
-                  <button
-                    key={`sort-${s}`}
-                    onClick={() => setSortBy(s)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${sortBy === s ? 'bg-card text-foreground shadow-sm border border-border' : 'text-muted-foreground hover:text-foreground'}`}
-                  >
-                    {s === 'proximity' ? '📍 Nearest' : s === 'price' ? '💰 Best Price' : s === 'delivery' ? '⚡ Fastest' : '⭐ Top Rated'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Scrollable results */}
-            <div className="flex-1 overflow-y-auto p-5">
-              <ResultsGrid
-                listings={sorted}
-                loading={isSearching}
-                hasSearched={hasSearched}
-                compareItems={compareItems}
-                onToggleCompare={toggleCompare}
-                onAddToWatchlist={handleAddToWatchlist}
-                displayCurrency={displayCurrency}
-                exchangeRate={exchangeRate}
-                selectedCategory={selectedCategory}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Compare floating button */}
+      {/* Compare button */}
       {compareItems.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <button
-            onClick={() => setCompareOpen(true)}
-            className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-2xl shadow-xl shadow-primary/30 text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150"
-          >
-            <span className="w-5 h-5 rounded-full bg-white/25 text-xs font-bold flex items-center justify-center">{compareItems.length}</span>
-            Compare items
+        <div style={{ position: 'fixed', bottom: 80, right: 20, zIndex: 40 }}>
+          <button onClick={() => setCompareOpen(true)} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, animation: 'pulse-glow 2.5s ease-in-out infinite' }}>
+            <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+              {compareItems.length}
+            </span>
+            Compare
           </button>
         </div>
       )}
