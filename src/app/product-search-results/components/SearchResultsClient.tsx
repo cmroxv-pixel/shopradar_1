@@ -20,7 +20,7 @@ const CATEGORIES = [
   { id: 'electronics', label: 'Electronics' },
   { id: 'gaming',      label: 'Gaming' },
   { id: 'clothing',    label: 'Clothing' },
-  { id: 'home',        label: 'Home' },
+  { id: 'home',        label: 'Home & Living' },
   { id: 'sports',      label: 'Sports' },
   { id: 'books',       label: 'Books' },
 ];
@@ -28,16 +28,14 @@ const CATEGORIES = [
 const SORT_OPTIONS = [
   { id: 'price',     label: 'Cheapest' },
   { id: 'delivery',  label: 'Fastest' },
-  { id: 'rating',    label: 'Top rated' },
+  { id: 'rating',    label: 'Top Rated' },
   { id: 'proximity', label: 'Nearest' },
 ] as const;
 
-// Currency by country code
 const COUNTRY_CURRENCY: Record<string, { code: string; rate: number }> = {
   au: { code: 'AUD', rate: 1 },
   us: { code: 'USD', rate: 0.64 },
   gb: { code: 'GBP', rate: 0.51 },
-  eu: { code: 'EUR', rate: 0.59 },
   nz: { code: 'NZD', rate: 1.09 },
   ca: { code: 'CAD', rate: 0.87 },
   jp: { code: 'JPY', rate: 96 },
@@ -58,19 +56,35 @@ function StatusBar({ active, query }: { active: boolean; query: string }) {
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [active]);
   if (!active) return null;
+
   return (
-    <div className="animate-fade-up" style={{ marginTop: 16, background: 'hsl(var(--card) / 0.75)', backdropFilter: 'blur(20px)', border: '1px solid hsl(var(--primary) / 0.2)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 20px hsl(var(--primary) / 0.08)' }}>
-      <div style={{ padding: '11px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="animate-fade-up" style={{
+      marginTop: 16,
+      background: 'hsl(var(--card))',
+      border: '1.5px solid hsl(var(--primary) / 0.2)',
+      borderRadius: 14,
+      overflow: 'hidden',
+      boxShadow: '0 4px 20px hsl(var(--primary) / 0.08)',
+    }}>
+      <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="animate-spin-sm" style={{ display: 'inline-block', width: 13, height: 13, border: '2px solid hsl(var(--primary))', borderTopColor: 'transparent', borderRadius: '50%', flexShrink: 0 }} />
-          <span style={{ fontFamily: 'DM Sans', fontSize: 13, color: 'hsl(var(--foreground))', fontWeight: 500 }}>{STEPS[step].msg}</span>
+          <span className="animate-spin-sm" style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid hsl(var(--primary))', borderTopColor: 'transparent', borderRadius: '50%', flexShrink: 0 }} />
+          <span style={{ fontFamily: 'Inter', fontSize: 13, color: 'hsl(var(--foreground))', fontWeight: 500 }}>
+            {STEPS[step].msg}
+          </span>
         </div>
-        <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>{STEPS[step].pct}%</span>
+        <span style={{ fontFamily: 'Inter', fontSize: 11, color: 'hsl(var(--muted-foreground))', fontVariantNumeric: 'tabular-nums' }}>
+          {STEPS[step].pct}%
+        </span>
       </div>
-      <div className="progress-track"><div className="progress-fill" style={{ width: `${STEPS[step].pct}%` }} /></div>
-      <div style={{ padding: '7px 16px', background: 'hsl(var(--primary) / 0.04)' }}>
+      <div className="progress-track">
+        <div className="progress-fill" style={{ width: `${STEPS[step].pct}%` }} />
+      </div>
+      <div style={{ padding: '8px 18px', background: 'hsl(var(--primary) / 0.03)' }}>
         <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>
-          Searching for <strong style={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}>"{query}"</strong> — usually ~7s
+          Searching for{' '}
+          <strong style={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}>"{query}"</strong>
+          {' '}— usually ~7 seconds
         </span>
       </div>
     </div>
@@ -98,7 +112,6 @@ export default function SearchResultsClient() {
   const [showRecent, setShowRecent] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Load recent searches
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('shopradar_recent') || '[]');
@@ -106,7 +119,6 @@ export default function SearchResultsClient() {
     } catch { }
   }, []);
 
-  // Auto-detect currency from country
   useEffect(() => {
     if (address.country) {
       const cc = address.country.slice(0, 2).toLowerCase();
@@ -190,162 +202,226 @@ export default function SearchResultsClient() {
   const inStock = sorted.filter(l => l.stockStatus !== 'Out of Stock');
   const bestPrice = inStock.length > 0 ? Math.min(...inStock.map(l => l.price)) : null;
   const fastestDays = inStock.length > 0 ? Math.min(...inStock.map(l => l.deliveryDays)) : null;
+  const currSym = displayCurrency === 'AUD' ? 'A$' : displayCurrency === 'USD' ? '$' : displayCurrency === 'GBP' ? '£' : displayCurrency + ' ';
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-      <Toaster position="bottom-right" toastOptions={{ style: { background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', fontFamily: 'DM Sans, sans-serif', fontSize: 13 } }} />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: 'hsl(var(--card))',
+            border: '1.5px solid hsl(var(--border))',
+            color: 'hsl(var(--foreground))',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: 13,
+            borderRadius: 12,
+          },
+        }}
+      />
 
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '28px 16px 120px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '48px 24px 120px' }}>
 
-        {/* Hero */}
-        <div className="animate-fade-up" style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(26px, 6vw, 44px)', letterSpacing: '-0.025em', lineHeight: 1.1, marginBottom: 10, background: 'linear-gradient(135deg, hsl(var(--foreground)) 20%, hsl(var(--primary)) 60%, hsl(var(--accent)) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Find the best price.<br />Anywhere.
+        {/* ── Hero ── */}
+        <div className="animate-fade-up" style={{ marginBottom: 48 }}>
+          {/* Big serif headline */}
+          <h1 style={{
+            fontFamily: 'Instrument Serif, serif',
+            fontWeight: 400,
+            fontSize: 'clamp(42px, 6vw, 80px)',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.0,
+            color: 'hsl(var(--primary))',
+            marginBottom: 16,
+          }}>
+            Find the best price,<br />
+            <span style={{ color: 'hsl(var(--foreground))' }}>anywhere.</span>
           </h1>
-          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14, lineHeight: 1.7 }}>
-            Real-time prices from 40+ global marketplaces, delivered to you.
+          <p style={{
+            color: 'hsl(var(--muted-foreground))',
+            fontSize: 16, lineHeight: 1.6,
+            fontWeight: 400, maxWidth: 480,
+          }}>
+            Real-time prices from 40+ global marketplaces.<br />
+            Delivered to your door.
           </p>
         </div>
 
-        {/* Location bar */}
-        <div className="animate-fade-up location-glow" style={{ marginBottom: 10, animationDelay: '0.08s' }}>
-          <AddressSelector value={address} onChange={setAddress} />
-        </div>
+        {/* ── Two-column layout on desktop ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: resultsOpen ? '340px 1fr' : '1fr', gap: 32, alignItems: 'start' }}>
 
-        {/* Search bar */}
-        <div className="animate-fade-up search-glow" style={{ animationDelay: '0.13s', padding: 6, display: 'flex', gap: 8 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 10 }}>
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" style={{ color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
-              <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M10 10L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <input
-              ref={searchRef}
-              value={searchText}
-              onChange={e => { setSearchText(e.target.value); setShowRecent(e.target.value.length === 0 && recentSearches.length > 0); }}
-              onFocus={() => { if (!searchText && recentSearches.length > 0) setShowRecent(true); }}
-              onBlur={() => setTimeout(() => setShowRecent(false), 150)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder={address.country ? 'Search any product…' : 'Set your location first…'}
-              disabled={!address.country || isSearching}
-              style={{ background: 'none', border: 'none', outline: 'none', flex: 1, fontSize: 14, color: 'hsl(var(--foreground))', fontFamily: 'DM Sans, sans-serif', padding: '7px 0' }}
-            />
-            {searchText && !isSearching && (
-              <button onClick={() => { setSearchText(''); searchRef.current?.focus(); }} style={{ color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer', padding: '0 6px', lineHeight: 1, opacity: 0.6 }}>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              </button>
-            )}
-          </div>
-          <button onClick={() => handleSearch()} disabled={!address.country || isSearching || !searchText.trim()} className="btn-primary">
-            {isSearching ? 'Searching…' : 'Search'}
-          </button>
-        </div>
+          {/* ── Left: Search panel ── */}
+          <div style={{ position: resultsOpen ? 'sticky' : 'relative', top: resultsOpen ? 80 : 'auto' }}>
 
-        {/* Recent searches dropdown */}
-        {showRecent && recentSearches.length > 0 && (
-          <div className="animate-fade-up" style={{ marginTop: 4, background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 10, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', zIndex: 50, position: 'relative' }}>
-            <div style={{ padding: '8px 12px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'hsl(var(--muted-foreground))', fontFamily: 'Syne, sans-serif', letterSpacing: '0.05em' }}>RECENT SEARCHES</span>
-              <button onClick={() => { localStorage.removeItem('shopradar_recent'); setRecentSearches([]); setShowRecent(false); }} style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer' }}>Clear</button>
+            {/* Location */}
+            <div className="location-glow" style={{ marginBottom: 10 }}>
+              <AddressSelector value={address} onChange={setAddress} />
             </div>
-            {recentSearches.map((s, i) => (
-              <button key={i} onMouseDown={() => { setSearchText(s); handleSearch(s); }} style={{ width: '100%', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', color: 'hsl(var(--foreground))', fontSize: 13, fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.1s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted) / 0.5)'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}
-              >
-                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
-                  <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.2"/>
-                  <path d="M5.5 3v2.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
-                {s}
+
+            {/* Search bar */}
+            <div className="search-glow" style={{ padding: '6px 6px 6px 16px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
+                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M11 11L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <input
+                ref={searchRef}
+                value={searchText}
+                onChange={e => { setSearchText(e.target.value); setShowRecent(e.target.value.length === 0 && recentSearches.length > 0); }}
+                onFocus={() => { if (!searchText && recentSearches.length > 0) setShowRecent(true); }}
+                onBlur={() => setTimeout(() => setShowRecent(false), 150)}
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                placeholder={address.country ? 'Search any product…' : 'Set your location first…'}
+                disabled={!address.country || isSearching}
+                style={{ background: 'none', border: 'none', outline: 'none', flex: 1, fontSize: 14, color: 'hsl(var(--foreground))', fontFamily: 'Inter, sans-serif', padding: '7px 0' }}
+              />
+              {searchText && !isSearching && (
+                <button onClick={() => { setSearchText(''); searchRef.current?.focus(); }}
+                  style={{ color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', opacity: 0.5 }}>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+              )}
+              <button onClick={() => handleSearch()} disabled={!address.country || isSearching || !searchText.trim()} className="btn-primary" style={{ fontSize: 13, padding: '9px 20px' }}>
+                {isSearching ? 'Searching…' : 'Search'}
               </button>
-            ))}
-          </div>
-        )}
+            </div>
 
-        <p style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', marginTop: 8, textAlign: 'center', opacity: 0.6 }}>
-          Scanning Amazon · eBay · JB Hi-Fi · Kogan · Cash Converters · CeX &amp; more
-          {address.country && displayCurrency !== 'AUD' && (
-            <span style={{ marginLeft: 6, color: 'hsl(var(--primary))', fontWeight: 600, opacity: 1 }}>
-              · Showing {displayCurrency}
-            </span>
-          )}
-        </p>
-
-        {/* Categories */}
-        <div className="animate-fade-up" style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 16, animationDelay: '0.18s' }}>
-          {CATEGORIES.map(c => (
-            <button key={c.id} onClick={() => setCategory(c.id)} className={`btn-ghost${category === c.id ? ' active' : ''}`}>
-              {c.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Status bar */}
-        <StatusBar active={isSearching} query={query} />
-
-        {/* Results */}
-        {resultsOpen && hasSearched && (
-          <div className="animate-fade-up" style={{ marginTop: 24 }}>
-            {/* Meta row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                {bestPrice !== null && <span className="badge badge-success">Best {displayCurrency === 'AUD' ? 'A$' : displayCurrency + ' '}{bestPrice.toFixed(2)}</span>}
-                {fastestDays !== null && <span className="badge badge-accent">{fastestDays}d delivery</span>}
-                <span className="badge badge-primary">{sorted.length} results</span>
-              </div>
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {SORT_OPTIONS.map(s => (
-                  <button key={s.id} onClick={() => setSortBy(s.id)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer', border: '1px solid', fontFamily: 'DM Sans, sans-serif', transition: 'all 0.15s', borderColor: sortBy === s.id ? 'hsl(var(--primary) / 0.5)' : 'hsl(var(--border))', background: sortBy === s.id ? 'hsl(var(--primary) / 0.1)' : 'transparent', color: sortBy === s.id ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))', fontWeight: sortBy === s.id ? 600 : 400 }}>
-                    {s.label}
+            {/* Recent searches */}
+            {showRecent && recentSearches.length > 0 && (
+              <div className="animate-fade-up" style={{ marginBottom: 10, background: 'hsl(var(--card))', border: '1.5px solid hsl(var(--border))', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', zIndex: 50, position: 'relative' }}>
+                <div style={{ padding: '10px 14px 6px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'hsl(var(--muted-foreground))', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Recent</span>
+                  <button onClick={() => { localStorage.removeItem('shopradar_recent'); setRecentSearches([]); setShowRecent(false); }} style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer' }}>Clear</button>
+                </div>
+                {recentSearches.map((s, i) => (
+                  <button key={i} onMouseDown={() => handleSearch(s)}
+                    style={{ width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', color: 'hsl(var(--foreground))', fontSize: 13, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.1s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
+                      <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.2"/>
+                      <path d="M5.5 3v2.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    {s}
                   </button>
                 ))}
-                <button onClick={() => setShowFilters(f => !f)} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer', border: '1px solid', fontFamily: 'DM Sans, sans-serif', transition: 'all 0.15s', borderColor: showFilters ? 'hsl(var(--primary) / 0.5)' : 'hsl(var(--border))', background: showFilters ? 'hsl(var(--primary) / 0.1)' : 'transparent', color: showFilters ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 2.5h9M3 5.5h5M4.5 8.5h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-                  Filter
-                </button>
-              </div>
-            </div>
-
-            {/* Filter panel */}
-            {showFilters && (
-              <div className="animate-fade-up" style={{ background: 'hsl(var(--card) / 0.7)', backdropFilter: 'blur(16px)', border: '1px solid hsl(var(--border))', borderRadius: 10, padding: '11px 14px', marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', fontWeight: 500 }}>Price</span>
-                <input type="number" placeholder="Min" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ width: 72, padding: '5px 9px', fontSize: 12, borderRadius: 6, background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', outline: 'none' }} />
-                <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 12 }}>–</span>
-                <input type="number" placeholder="Max" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ width: 72, padding: '5px 9px', fontSize: 12, borderRadius: 6, background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', outline: 'none' }} />
-                <button onClick={() => { setMinPrice(''); setMaxPrice(''); }} style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer' }}>Clear</button>
               </div>
             )}
 
-            <ResultsGrid
-              listings={sorted}
-              loading={isSearching}
-              hasSearched={hasSearched}
-              compareItems={compareItems}
-              onToggleCompare={toggleCompare}
-              onAddToWatchlist={(l) => toast.success(`"${l.productName}" added to watchlist`)}
-              displayCurrency={displayCurrency}
-              exchangeRate={exchangeRate}
-              selectedCategory={category}
-              onBarcodeSearch={(q) => handleSearch(q)}
-            />
+            {/* Caption */}
+            <p style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', lineHeight: 1.6, opacity: 0.7, marginBottom: 20 }}>
+              Scanning Amazon · eBay · JB Hi-Fi · Kogan<br />Cash Converters · CeX · Harvey Norman &amp; more
+            </p>
+
+            {/* Categories */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+              {CATEGORIES.map(c => (
+                <button key={c.id} onClick={() => setCategory(c.id)} className={`btn-ghost${category === c.id ? ' active' : ''}`} style={{ fontSize: 12 }}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Status bar */}
+            <StatusBar active={isSearching} query={query} />
+
+            {/* Results meta — only show in sidebar when results open */}
+            {resultsOpen && hasSearched && !isSearching && (
+              <div style={{ marginTop: 20, padding: '16px', background: 'hsl(var(--card))', border: '1.5px solid hsl(var(--border))', borderRadius: 16 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Results for "{query}"</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {bestPrice !== null && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Best price</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: 'hsl(var(--success))', fontFamily: 'Instrument Serif, serif' }}>{currSym}{bestPrice.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {fastestDays !== null && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Fastest delivery</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--primary))' }}>{fastestDays} day{fastestDays !== 1 ? 's' : ''}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Listings found</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))' }}>{sorted.length}</span>
+                  </div>
+                  {displayCurrency !== 'AUD' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Currency</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'hsl(var(--primary))' }}>{displayCurrency}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sort */}
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid hsl(var(--border))' }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Sort by</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {SORT_OPTIONS.map(s => (
+                      <button key={s.id} onClick={() => setSortBy(s.id)} style={{ textAlign: 'left', padding: '7px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', background: sortBy === s.id ? 'hsl(var(--primary) / 0.08)' : 'transparent', color: sortBy === s.id ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))', fontSize: 13, fontFamily: 'Inter, sans-serif', fontWeight: sortBy === s.id ? 600 : 400, transition: 'all 0.1s' }}>
+                        {sortBy === s.id ? '→ ' : ''}{s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price filter */}
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid hsl(var(--border))' }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Price range</p>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input type="number" placeholder="Min" value={minPrice} onChange={e => setMinPrice(e.target.value)} style={{ flex: 1, padding: '7px 10px', fontSize: 12, borderRadius: 8, background: 'hsl(var(--input))', border: '1.5px solid hsl(var(--border))', color: 'hsl(var(--foreground))', outline: 'none' }} />
+                    <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 12 }}>–</span>
+                    <input type="number" placeholder="Max" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ flex: 1, padding: '7px 10px', fontSize: 12, borderRadius: 8, background: 'hsl(var(--input))', border: '1.5px solid hsl(var(--border))', color: 'hsl(var(--foreground))', outline: 'none' }} />
+                  </div>
+                  {(minPrice || maxPrice) && (
+                    <button onClick={() => { setMinPrice(''); setMaxPrice(''); }} style={{ marginTop: 6, fontSize: 11, color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Clear filter</button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* ── Right: Results ── */}
+          {resultsOpen && hasSearched && (
+            <div className="animate-fade-up">
+              <ResultsGrid
+                listings={sorted}
+                loading={isSearching}
+                hasSearched={hasSearched}
+                compareItems={compareItems}
+                onToggleCompare={toggleCompare}
+                onAddToWatchlist={(l) => toast.success(`"${l.productName}" added to watchlist`)}
+                displayCurrency={displayCurrency}
+                exchangeRate={exchangeRate}
+                selectedCategory={category}
+                onBarcodeSearch={(q) => handleSearch(q)}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Compare button */}
       {compareItems.length > 0 && (
-        <div style={{ position: 'fixed', bottom: 80, right: 20, zIndex: 40 }}>
-          <button onClick={() => setCompareOpen(true)} className="btn-primary animate-glow" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-            <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>{compareItems.length}</span>
+        <div style={{ position: 'fixed', bottom: 80, right: 24, zIndex: 40 }}>
+          <button onClick={() => setCompareOpen(true)} className="btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, boxShadow: '0 4px 20px hsl(var(--primary) / 0.35)' }}>
+            <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+              {compareItems.length}
+            </span>
             Compare
           </button>
         </div>
       )}
 
       {compareOpen && compareItems.length >= 2 && (
-        <ComparisonDrawer items={compareItems} onRemove={(id) => setCompareItems(prev => prev.filter(l => l.id !== id))} onClose={() => setCompareOpen(false)} />
+        <ComparisonDrawer
+          items={compareItems}
+          onRemove={(id) => setCompareItems(prev => prev.filter(l => l.id !== id))}
+          onClose={() => setCompareOpen(false)}
+        />
       )}
     </div>
   );
