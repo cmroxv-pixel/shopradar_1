@@ -10,22 +10,19 @@ function isGoogleUrl(url: string): boolean {
   }
 }
 
-/**
- * Use the serpapi_immersive_product_api URL (which is already in each shopping result)
- * to fetch the real seller listing URL for a specific marketplace.
- *
- * The immersive product API returns a `sellers` array with direct retailer links.
- */
 async function getDirectUrlFromImmersiveApi(
   immersiveApiUrl: string,
-  marketplace: string
+  marketplace: string,
+  serpApiKey: string
 ): Promise<string> {
   try {
-    const res = await fetch(immersiveApiUrl);
+    // The immersive URL from SerpAPI doesn't include the api_key — we must add it
+    const urlWithKey = `${immersiveApiUrl}&api_key=${serpApiKey}`;
+
+    const res = await fetch(urlWithKey);
     if (!res.ok) return '';
     const data = await res.json();
 
-    // The immersive product API returns sellers under different keys depending on the product
     const sellers: any[] =
       data?.sellers_results?.online_sellers ||
       data?.buying_options ||
@@ -34,9 +31,9 @@ async function getDirectUrlFromImmersiveApi(
 
     if (sellers.length === 0) return '';
 
-    const mLower = marketplace.toLowerCase().replace(/\s*-\s*.+$/, '').trim(); // strip " - sellerName"
+    const mLower = marketplace.toLowerCase().replace(/\s*-\s*.+$/, '').trim();
 
-    // 1. Try to find exact marketplace match
+    // Try to match the specific marketplace first
     for (const seller of sellers) {
       const name = (seller.name || seller.seller || seller.store || '').toLowerCase();
       const link = seller.link || seller.url || seller.base_price_link || '';
@@ -44,7 +41,7 @@ async function getDirectUrlFromImmersiveApi(
       if (name.includes(mLower) || mLower.includes(name)) return link;
     }
 
-    // 2. Return first valid direct link
+    // Return first valid direct link from any seller
     for (const seller of sellers) {
       const link = seller.link || seller.url || seller.base_price_link || '';
       if (link && !isGoogleUrl(link)) return link;
@@ -58,7 +55,7 @@ async function getDirectUrlFromImmersiveApi(
 
 function buildFallbackUrl(marketplace: string, title: string, query: string): string {
   const t = encodeURIComponent(title);
-  const m = marketplace.toLowerCase().trim().replace(/\s*-\s*.+$/, ''); // strip seller name
+  const m = marketplace.toLowerCase().trim().replace(/\s*-\s*.+$/, '');
 
   if (m.startsWith('ebay')) return `https://www.ebay.com.au/sch/i.html?_nkw=${t}&_sop=12`;
   if (m.includes('cash converters')) return `https://www.cashconverters.com.au/shop/search?q=${t}`;
@@ -89,10 +86,8 @@ function buildFallbackUrl(marketplace: string, title: string, query: string): st
   if (m.includes('salvos')) return `https://www.salvosstores.com.au/search?q=${t}`;
   if (m.includes('whatnot')) return `https://www.whatnot.com/search?q=${encodeURIComponent(query)}`;
   if (m.includes('snapklik')) return `https://snapklik.com/au/?q=${t}`;
-  if (m.includes('hospitality')) return `https://www.google.com/search?q=${encodeURIComponent(title + ' buy')}`;
 
-  // Generic fallback
-  return `https://www.google.com/search?q=${encodeURIComponent(title + ' ' + marketplace + ' buy')}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(title + ' buy')}`;
 }
 
 function parseDelivery(deliveryStr: string): {
@@ -131,7 +126,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing SERPAPI_KEY' }, { status: 500 });
 
   try {
-    // Step 1: Get Google Shopping results
+    // Step 1: Google Shopping search
     const shoppingParams = new URLSearchParams({
       engine: 'google_shopping',
       q: query,
@@ -155,8 +150,7 @@ export async function GET(req: NextRequest) {
     const currency = country === 'au' ? 'AUD' : country === 'gb' ? 'GBP' :
       country === 'us' ? 'USD' : country === 'eu' ? 'EUR' : 'AUD';
 
-    // Step 2: For each result, use serpapi_immersive_product_api to get real direct URL
-    // Cap at 15 results — each immersive API call costs 1 SerpAPI credit
+    // Step 2: Resolve direct URLs using the immersive product API (with api_key appended)
     const topResults = rawResults.slice(0, 15);
 
     const listings = await Promise.all(
@@ -169,13 +163,12 @@ export async function GET(req: NextRequest) {
         const title = String(item.title || query);
         let directUrl = '';
 
-        // Use the immersive product API URL that's already in every result
         const immersiveUrl: string = item.serpapi_immersive_product_api || '';
         if (immersiveUrl) {
-          directUrl = await getDirectUrlFromImmersiveApi(immersiveUrl, marketplace);
+          // Pass the api_key so the call doesn't return 401
+          directUrl = await getDirectUrlFromImmersiveApi(immersiveUrl, marketplace, serpApiKey);
         }
 
-        // Fallback to title-based search URL if immersive API returned nothing
         if (!directUrl) {
           directUrl = buildFallbackUrl(marketplace, title, query);
         }
