@@ -1,9 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import type { Listing } from './mockData';
-import PriceSparkline from './PriceSparkline';
 import AppImage from '@/components/ui/AppImage';
-import { Bookmark, GitCompare, ExternalLink, Star, Truck, Zap, Package, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronUp, Clock, Share2, TrendingDown, Flame, Tag } from 'lucide-react';
 
 interface ResultsGridProps {
   listings: Listing[];
@@ -17,408 +15,244 @@ interface ResultsGridProps {
   selectedCategory?: string;
 }
 
-// Currency symbols map
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: '$', EUR: '€', GBP: '£', AUD: 'A$', CAD: 'C$', JPY: '¥', INR: '₹', SGD: 'S$', NZD: 'NZ$', CHF: 'Fr',
-};
+const SYMBOLS: Record<string, string> = { AUD: 'A$', USD: '$', GBP: '£', EUR: '€', CAD: 'C$', JPY: '¥', NZD: 'NZ$' };
 
-function formatPrice(price: number, currency: string, displayCurrency: string, exchangeRate: number): string {
-  const converted = displayCurrency !== currency ? price * exchangeRate : price;
-  const sym = CURRENCY_SYMBOLS[displayCurrency] || displayCurrency + ' ';
-  return `${sym}${converted.toFixed(2)}`;
+function fmt(price: number, currency: string, displayCurrency: string, rate: number) {
+  const converted = displayCurrency !== currency ? price * rate : price;
+  return `${SYMBOLS[displayCurrency] || displayCurrency + ' '}${converted.toFixed(2)}`;
 }
 
-function DealScoreBadge({ savingsPct }: { savingsPct: number }) {
-  if (savingsPct <= 0) return null;
-  if (savingsPct >= 30) return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20">
-      <Flame size={9} fill="currentColor" /> Hot Deal −{savingsPct}%
-    </span>
-  );
-  if (savingsPct >= 15) return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
-      <TrendingDown size={9} /> Good Deal −{savingsPct}%
-    </span>
-  );
+function SkeletonCard() {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-      <Tag size={9} /> −{savingsPct}%
-    </span>
-  );
-}
-
-function StockBadge({ status, count }: { status: Listing['stockStatus']; count?: number }) {
-  if (status === 'In Stock') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
-      <CheckCircle size={10} /> In Stock
-    </span>
-  );
-  if (status === 'Low Stock') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
-      <AlertTriangle size={10} /> Only {count} left
-    </span>
-  );
-  if (status === 'Pre-Order') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">
-      <Clock size={10} /> Pre-Order
-    </span>
-  );
-  if (status === 'Unavailable') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
-      <XCircle size={10} /> Unavailable
-    </span>
-  );
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
-      <XCircle size={10} /> Out of Stock
-    </span>
-  );
-}
-
-function ShippingBadge({ tier }: { tier: Listing['shippingTier'] }) {
-  if (tier === 'Express') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/15 text-accent border border-accent/25">
-      <Zap size={9} fill="currentColor" /> Express
-    </span>
-  );
-  if (tier === 'Standard') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-      <Truck size={9} /> Standard
-    </span>
-  );
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
-      <Package size={9} /> Economy
-    </span>
-  );
-}
-
-function ShareButton({ listing }: { listing: Listing }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const shareText = `Check out ${listing.productName} on ${listing.marketplace} for ${listing.currency === 'USD' ? '$' : listing.currency + ' '}${listing.price.toFixed(2)}! Found via ShopRadar`;
-    const shareUrl = listing.listingUrl;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: listing.productName, text: shareText, url: shareUrl });
-      } catch { /* user cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  return (
-    <button
-      onClick={handleShare}
-      title="Share this deal"
-      className={`p-2.5 rounded-xl border transition-all duration-150 active:scale-95 ${copied ? 'border-success bg-success/10 text-success' : 'border-border text-muted-foreground hover:text-foreground hover:border-border'}`}
-    >
-      <Share2 size={15} />
-    </button>
-  );
-}
-
-function SimilarProductsSection({ listing, allListings }: { listing: Listing; allListings: Listing[] }) {
-  const similar = allListings
-    .filter(l => l.id !== listing.id && l.productName === listing.productName)
-    .slice(0, 3);
-
-  if (similar.length === 0) return null;
-
-  return (
-    <div className="mt-3 pt-3 border-t border-border">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Also available at</p>
-      <div className="space-y-1.5">
-        {similar.map(s => (
-          <a
-            key={s.id}
-            href={s.listingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg bg-muted/40 border border-border hover:border-primary/30 hover:bg-primary/5 transition-all duration-150"
-          >
-            <span className="font-medium text-foreground">{s.marketplaceLogo} {s.marketplace}</span>
-            <span className="font-bold text-foreground tabular-nums">
-              {s.currency === 'USD' ? '$' : s.currency + ' '}{s.price.toFixed(2)}
-            </span>
-          </a>
-        ))}
+    <div style={{
+      background: 'rgba(10,13,26,0.6)', border: '1px solid rgba(99,120,255,0.08)',
+      borderRadius: 16, overflow: 'hidden', animation: 'pulse 1.8s ease-in-out infinite',
+    }}>
+      <div style={{ height: 160, background: 'rgba(99,120,255,0.05)' }} />
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ height: 10, background: 'rgba(99,120,255,0.07)', borderRadius: 4, width: '60%' }} />
+        <div style={{ height: 14, background: 'rgba(99,120,255,0.07)', borderRadius: 4, width: '85%' }} />
+        <div style={{ height: 22, background: 'rgba(99,120,255,0.07)', borderRadius: 4, width: '40%' }} />
+        <div style={{ height: 36, background: 'rgba(99,120,255,0.06)', borderRadius: 8, marginTop: 4 }} />
       </div>
     </div>
   );
 }
 
-function ListingCard({
-  listing,
-  rank,
-  isFastest,
-  isCheapest,
-  isComparing,
-  onToggleCompare,
-  onAddToWatchlist,
-  displayCurrency,
-  exchangeRate,
-  allListings,
+function ProductCard({
+  listing, rank, isCheapest, isFastest, isComparing, onToggleCompare, onAddToWatchlist, displayCurrency, exchangeRate,
 }: {
-  listing: Listing;
-  rank: number;
-  isFastest: boolean;
-  isCheapest: boolean;
-  isComparing: boolean;
-  onToggleCompare: (l: Listing) => void;
-  onAddToWatchlist: (l: Listing) => void;
-  displayCurrency: string;
-  exchangeRate: number;
-  allListings: Listing[];
+  listing: Listing; rank: number; isCheapest: boolean; isFastest: boolean;
+  isComparing: boolean; onToggleCompare: (l: Listing) => void; onAddToWatchlist: (l: Listing) => void;
+  displayCurrency: string; exchangeRate: number;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [showSimilar, setShowSimilar] = useState(false);
-  const savings = listing.originalPrice - listing.price;
-  const savingsPct = Math.round((savings / listing.originalPrice) * 100);
-  const isOutOfStock = listing.stockStatus === 'Out of Stock';
-  const isUnavailable = listing.stockStatus === 'Unavailable';
-  const isPreOrder = listing.stockStatus === 'Pre-Order';
-  const isDisabled = isOutOfStock || isUnavailable;
-
-  // Determine display currency: if listing is AUD, show AUD; otherwise use selected display currency
-  const listingIsAud = listing.currency === 'AUD';
-  const showConverted = !listingIsAud && displayCurrency !== listing.currency;
-  const effectiveDisplayCurrency = listingIsAud ? 'AUD' : displayCurrency;
-  const effectiveRate = listingIsAud ? 1 : exchangeRate;
-  const convertedPrice = formatPrice(listing.price, listing.currency, effectiveDisplayCurrency, effectiveRate);
-  const convertedOriginal = formatPrice(listing.originalPrice, listing.currency, effectiveDisplayCurrency, effectiveRate);
-
-  // Title to display: prefer listing.title over productName
-  const displayTitle = listing.title && listing.title !== listing.productName
-    ? listing.title
-    : listing.productName;
+  const [imgError, setImgError] = useState(false);
+  const price = fmt(listing.price, listing.currency, displayCurrency, exchangeRate);
+  const isDisabled = listing.stockStatus === 'Out of Stock' || (listing.stockStatus as string) === 'Unavailable';
 
   return (
-    <div className={`bg-card border rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${isDisabled ? 'opacity-55' : ''} ${isComparing ? 'border-primary ring-2 ring-primary/20 shadow-md shadow-primary/10' : 'border-border hover:border-primary/40 shadow-sm'}`}>
-      {/* Top highlight bar */}
+    <div
+      className="product-card"
+      style={{
+        opacity: isDisabled ? 0.5 : 1,
+        outline: isComparing ? '2px solid var(--primary)' : 'none',
+        outlineOffset: 2,
+      }}
+    >
+      {/* Best price / fastest badge */}
       {(isCheapest || isFastest) && (
-        <div className={`flex gap-2 px-4 py-2.5 ${isCheapest ? 'bg-primary/8' : 'bg-accent/8'} border-b border-border`}>
+        <div style={{
+          padding: '6px 14px',
+          background: isCheapest ? 'rgba(52,211,153,0.08)' : 'rgba(168,85,247,0.08)',
+          borderBottom: `1px solid ${isCheapest ? 'rgba(52,211,153,0.12)' : 'rgba(168,85,247,0.12)'}`,
+          display: 'flex', gap: 8,
+        }}>
           {isCheapest && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary">
-              🏆 Best Price
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', fontFamily: 'Syne, sans-serif', letterSpacing: '0.04em' }}>
+              ★ BEST PRICE
             </span>
           )}
           {isFastest && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-accent">
-              ⚡ Fastest Delivery
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', fontFamily: 'Syne, sans-serif', letterSpacing: '0.04em' }}>
+              ⚡ FASTEST
             </span>
           )}
         </div>
       )}
 
-      <div className="p-4">
-        {/* Product image — always shown, placeholder if no URL */}
-        <div className="w-full h-44 rounded-xl overflow-hidden bg-muted border border-border mb-3 flex items-center justify-center">
-          {listing.imageUrl ? (
-            <AppImage
-              src={listing.imageUrl}
-              alt={`${displayTitle} from ${listing.marketplace}`}
-              width={400}
-              height={176}
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-1.5 text-muted-foreground/50">
-              <Package size={32} />
-              <span className="text-xs">No image</span>
-            </div>
-          )}
-        </div>
+      {/* Image */}
+      <div style={{
+        height: 160, background: 'rgba(6,8,15,0.8)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        borderBottom: '1px solid var(--border)', overflow: 'hidden',
+      }}>
+        {listing.imageUrl && !imgError ? (
+          <AppImage
+            src={listing.imageUrl}
+            alt={listing.title}
+            width={280}
+            height={160}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 12 }}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style={{ color: 'rgba(99,120,255,0.2)' }}>
+            <rect x="4" y="8" width="28" height="20" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="13" cy="16" r="3" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M4 24l7-5 5 4 5-6 11 7" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </div>
 
-        {/* Site name — prominent pill */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 text-xs font-bold text-primary">
+      <div style={{ padding: '14px 14px 12px' }}>
+        {/* Store pill */}
+        <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 700, fontFamily: 'Syne, sans-serif',
+            color: 'var(--primary)', background: 'rgba(99,120,255,0.1)',
+            border: '1px solid rgba(99,120,255,0.18)',
+            borderRadius: 6, padding: '2px 8px', letterSpacing: '0.02em',
+            maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
             {listing.marketplace}
           </span>
-          <span className="text-xs text-muted-foreground">{listing.condition}</span>
-          {listing.freeReturns && <span className="text-xs text-success">· Free returns</span>}
+          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+            {listing.condition}
+          </span>
         </div>
 
-        {/* Title — big and bold */}
-        <p className="text-base font-bold text-foreground leading-snug line-clamp-2 mb-3">
-          {displayTitle}
+        {/* Title */}
+        <p style={{
+          fontSize: 13, fontWeight: 500, color: 'var(--text)', lineHeight: 1.45,
+          marginBottom: 10, display: '-webkit-box', WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          fontFamily: 'DM Sans, sans-serif',
+        }}>
+          {listing.title}
         </p>
 
-        {/* Stock + deal badges */}
-        <div className="flex items-center gap-1.5 flex-wrap mb-3">
-          <StockBadge status={listing.stockStatus} count={listing.stockCount} />
-          <DealScoreBadge savingsPct={savingsPct} />
-        </div>
-
-        {/* Price block */}
-        <div className="flex items-end justify-between gap-2 mb-3">
+        {/* Price + rating */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10 }}>
           <div>
-            <div className="text-2xl font-bold text-foreground tabular-nums leading-none">
-              {convertedPrice}
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: 'var(--text)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {price}
             </div>
-            {listing.originalPrice > listing.price && (
-              <div className="text-xs text-muted-foreground line-through tabular-nums mt-0.5">
-                {convertedOriginal}
-              </div>
-            )}
-            {showConverted && (
-              <div className="text-[10px] text-muted-foreground mt-0.5">
-                orig. {listing.currency} {listing.price.toFixed(2)}
-              </div>
+            {listing.shippingCost === 0 && (
+              <span style={{ fontSize: 10, color: 'var(--success)', fontWeight: 500, marginTop: 2, display: 'block' }}>Free shipping</span>
             )}
           </div>
-
-          {/* Rating */}
-          <div className="flex items-center gap-1 shrink-0">
-            {[1,2,3,4,5].map(i => (
-              <Star
-                key={`star-${listing.id}-${i}`}
-                size={11}
-                className={i <= Math.round(listing.sellerRating) ? 'text-accent' : 'text-muted'}
-                fill={i <= Math.round(listing.sellerRating) ? 'currentColor' : 'none'}
-              />
-            ))}
-            <span className="text-xs text-muted-foreground ml-1">{listing.sellerRating}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: '#fbbf24' }}>
+              <path d="M6 1l1.4 2.8L10.5 4l-2.25 2.2.53 3.1L6 7.75l-2.78 1.55.53-3.1L1.5 4l3.1-.2L6 1z" fill="currentColor"/>
+            </svg>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'DM Sans' }}>{listing.sellerRating}</span>
           </div>
         </div>
 
-        {/* Shipping badge + delivery info — always shown */}
-        <div className="flex items-center gap-2 flex-wrap mb-3">
-          <ShippingBadge tier={listing.shippingTier} />
-          {!isDisabled && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Truck size={11} className="text-primary" />
-              {listing.deliveryDate
-                ? `Arrives ${listing.deliveryDate}`
-                : `Est. ${listing.deliveryDays} day${listing.deliveryDays !== 1 ? 's' : ''}`}
-              {listing.shippingCost === 0 && <span className="text-success ml-1">· Free</span>}
-            </span>
-          )}
+        {/* Delivery */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+          <span style={{
+            fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 5,
+            background: listing.shippingTier === 'Express' ? 'rgba(168,85,247,0.12)' : 'rgba(99,120,255,0.08)',
+            color: listing.shippingTier === 'Express' ? 'var(--accent)' : 'var(--primary)',
+            border: `1px solid ${listing.shippingTier === 'Express' ? 'rgba(168,85,247,0.2)' : 'rgba(99,120,255,0.15)'}`,
+            fontFamily: 'Syne, sans-serif', letterSpacing: '0.04em',
+          }}>
+            {listing.shippingTier?.toUpperCase()}
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            {listing.deliveryDate ? `Arrives ${listing.deliveryDate}` : `Est. ${listing.deliveryDays}d`}
+          </span>
         </div>
-
-        {/* Price sparkline */}
-        <div className="pt-3 border-t border-border">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-muted-foreground font-medium">30-day price trend</span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowSimilar(!showSimilar)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Similar {showSimilar ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-              </button>
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {expanded ? 'Less' : 'Shipping'} {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-              </button>
-            </div>
-          </div>
-          <PriceSparkline data={listing.priceHistory} />
-        </div>
-
-        {/* Similar products */}
-        {showSimilar && (
-          <SimilarProductsSection listing={listing} allListings={allListings} />
-        )}
-
-        {/* Expanded delivery options */}
-        {expanded && listing.deliveryOptions.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border space-y-1.5">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Available Shipping</p>
-            {listing.deliveryOptions.map((opt, i) => (
-              <div key={`${listing.id}-opt-${i}`} className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg bg-muted/40 border border-border">
-                <div className="flex items-center gap-2">
-                  <ShippingBadge tier={opt.tier} />
-                  <span className="text-muted-foreground">{opt.days} day{opt.days !== 1 ? 's' : ''}</span>
-                </div>
-                <span className="font-semibold text-foreground tabular-nums">
-                  {opt.cost === 0 ? <span className="text-success">Free</span> : `$${opt.cost.toFixed(2)}`}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Actions */}
-        <div className="mt-4 flex items-center gap-2">
+        <div style={{ display: 'flex', gap: 6 }}>
           <a
-            href={listing.listingUrl}
+            href={isDisabled ? undefined : listing.listingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-95 ${isDisabled ? 'bg-muted text-muted-foreground cursor-not-allowed pointer-events-none' : isPreOrder ? 'bg-blue-500 text-white hover:opacity-90 shadow-sm shadow-blue-500/20' : 'bg-primary text-white hover:opacity-90 shadow-sm shadow-primary/20'}`}
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '9px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+              fontFamily: 'Syne, sans-serif', letterSpacing: '0.02em',
+              background: isDisabled ? 'rgba(99,120,255,0.06)' : 'linear-gradient(135deg, var(--primary), var(--accent))',
+              color: isDisabled ? 'var(--text-dim)' : 'white',
+              boxShadow: isDisabled ? 'none' : '0 0 16px var(--primary-glow)',
+              pointerEvents: isDisabled ? 'none' : 'auto',
+              textDecoration: 'none', transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => { if (!isDisabled) (e.currentTarget as HTMLElement).style.opacity = '0.85'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
           >
-            {isDisabled
-              ? (isUnavailable ? 'Unavailable' : 'Out of Stock')
-              : isPreOrder
-                ? <><Clock size={13} /> Pre-Order on {listing.marketplace}</>
-                : <><ExternalLink size={13} /> View Deal on {listing.marketplace}</>
-            }
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            {isDisabled ? 'Unavailable' : 'View Deal'}
           </a>
+
+          {/* Watchlist */}
           <button
             onClick={() => onAddToWatchlist(listing)}
             title="Add to watchlist"
-            className="p-2.5 rounded-xl border border-border text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all duration-150 active:scale-95"
+            style={{
+              width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border)',
+              background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,120,255,0.3)'; (e.currentTarget as HTMLElement).style.color = 'var(--primary)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
           >
-            <Bookmark size={15} />
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 11S1 7.5 1 4.5a3 3 0 015.5-1.65A3 3 0 0112 4.5C12 7.5 6.5 11 6.5 11z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>
           </button>
-          <ShareButton listing={listing} />
+
+          {/* Compare */}
           <button
             onClick={() => onToggleCompare(listing)}
-            title={isComparing ? 'Remove from comparison' : 'Add to comparison'}
-            className={`p-2.5 rounded-xl border transition-all duration-150 active:scale-95 ${isComparing ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground hover:border-border'}`}
+            title={isComparing ? 'Remove from compare' : 'Compare'}
+            style={{
+              width: 34, height: 34, borderRadius: 8,
+              border: `1px solid ${isComparing ? 'var(--primary)' : 'var(--border)'}`,
+              background: isComparing ? 'rgba(99,120,255,0.12)' : 'transparent',
+              color: isComparing ? 'var(--primary)' : 'var(--text-muted)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s',
+            }}
           >
-            <GitCompare size={15} />
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 4h9M2 9h9M8 1l3 3-3 3M5 6l-3 3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={`skel-${i}`} className="bg-card border border-border rounded-2xl p-4 space-y-3 animate-pulse">
-          <div className="flex gap-3.5">
-            <div className="w-[72px] h-[72px] rounded-xl bg-muted" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-muted rounded-lg w-3/4" />
-              <div className="h-3 bg-muted rounded-lg w-1/2" />
-              <div className="h-5 bg-muted rounded-lg w-1/3" />
-            </div>
-          </div>
-          <div className="h-8 bg-muted rounded-lg" />
-          <div className="h-10 bg-muted rounded-xl" />
-        </div>
-      ))}
     </div>
   );
 }
 
 export default function ResultsGrid({
   listings, loading, hasSearched, compareItems, onToggleCompare, onAddToWatchlist,
-  displayCurrency = 'USD', exchangeRate = 1, selectedCategory,
+  displayCurrency = 'AUD', exchangeRate = 1,
 }: ResultsGridProps) {
-  if (loading) return <LoadingSkeleton />;
+  if (loading) {
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+        {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    );
+  }
 
   if (!hasSearched) {
     return (
-      <div className="flex flex-col items-center justify-center py-28 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
-          <Package size={28} className="text-primary" />
+      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 14, margin: '0 auto 16px',
+          background: 'rgba(99,120,255,0.08)', border: '1px solid rgba(99,120,255,0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--primary)' }}>
+            <circle cx="11" cy="11" r="7.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M16.5 16.5L20 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
         </div>
-        <h3 className="text-lg font-bold text-foreground">Search for any product</h3>
-        <p className="text-sm text-muted-foreground mt-1.5 max-w-sm leading-relaxed">
-          Enter a product name above to compare prices across 40+ global marketplaces
+        <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--text)', marginBottom: 6 }}>
+          Search for any product
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+          Compare prices across 40+ global marketplaces
         </p>
       </div>
     );
@@ -426,24 +260,33 @@ export default function ResultsGrid({
 
   if (listings.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-28 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center mb-4">
-          <XCircle size={28} className="text-muted-foreground" />
+      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 14, margin: '0 auto 16px',
+          background: 'rgba(99,120,255,0.06)', border: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--text-muted)' }}>
+            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
         </div>
-        <h3 className="text-lg font-bold text-foreground">No listings match your filters</h3>
-        <p className="text-sm text-muted-foreground mt-1.5">Try widening your price range or removing marketplace filters</p>
+        <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--text)', marginBottom: 6 }}>
+          No results found
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Try widening your filters or a different search term</p>
       </div>
     );
   }
 
-  const inStockListings = listings.filter(l => l.stockStatus !== 'Out of Stock');
-  const cheapestId = inStockListings.length > 0 ? [...inStockListings].sort((a,b) => a.price - b.price)[0]?.id : null;
-  const fastestId = inStockListings.length > 0 ? [...inStockListings].sort((a,b) => a.deliveryDays - b.deliveryDays)[0]?.id : null;
+  const inStock = listings.filter(l => l.stockStatus !== 'Out of Stock');
+  const cheapestId = inStock.length > 0 ? [...inStock].sort((a, b) => a.price - b.price)[0]?.id : null;
+  const fastestId = inStock.length > 0 ? [...inStock].sort((a, b) => a.deliveryDays - b.deliveryDays)[0]?.id : null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
       {listings.map((listing, i) => (
-        <ListingCard
+        <ProductCard
           key={listing.id}
           listing={listing}
           rank={i + 1}
@@ -454,7 +297,6 @@ export default function ResultsGrid({
           onAddToWatchlist={onAddToWatchlist}
           displayCurrency={displayCurrency}
           exchangeRate={exchangeRate}
-          allListings={listings}
         />
       ))}
     </div>
