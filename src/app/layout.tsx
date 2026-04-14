@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import '../styles/tailwind.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
+import DarkModeInit from '@/components/DarkModeInit';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -28,13 +29,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <DarkModeInit />
+      </head>
       <body>
         <AuthProvider>
           <ThemeProvider>
             {children}
           </ThemeProvider>
         </AuthProvider>
-</body>
+      </body>
     </html>
   );
 }
