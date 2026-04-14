@@ -9,13 +9,13 @@ const NAV = [
     label: 'Search',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6"/>
-        <path d="M14 14L18 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <circle cx="9" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.6"/>
+        <path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
       </svg>
     ),
   },
   {
-    href: '/watchlist',
+    href: '/watchlist-price-alerts',
     label: 'Watchlist',
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
