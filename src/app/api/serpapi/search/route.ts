@@ -1,30 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Fallback search-page URLs per marketplace (used only if SerpAPI gives no link at all)
+// ─── Fallback search-page URLs (last resort only) ────────────────────────────
 const MARKETPLACE_SEARCH_URLS: Record<string, (q: string) => string> = {
-  'amazon': (q) => `https://www.amazon.com.au/s?k=${q}`,
+  'amazon':           (q) => `https://www.amazon.com.au/s?k=${q}`,
   'amazon australia': (q) => `https://www.amazon.com.au/s?k=${q}`,
-  'amazon.com.au': (q) => `https://www.amazon.com.au/s?k=${q}`,
-  'amazon.com': (q) => `https://www.amazon.com/s?k=${q}`,
-  'amazon.co.uk': (q) => `https://www.amazon.co.uk/s?k=${q}`,
-  'ebay': (q) => `https://www.ebay.com.au/sch/i.html?_nkw=${q}`,
-  'ebay.com.au': (q) => `https://www.ebay.com.au/sch/i.html?_nkw=${q}`,
-  'ebay.com': (q) => `https://www.ebay.com/sch/i.html?_nkw=${q}`,
-  'walmart': (q) => `https://www.walmart.com/search?q=${q}`,
-  'best buy': (q) => `https://www.bestbuy.com/site/searchpage.jsp?st=${q}`,
-  'jb hi-fi': (q) => `https://www.jbhifi.com.au/search?q=${q}`,
-  'jb hifi': (q) => `https://www.jbhifi.com.au/search?q=${q}`,
-  'harvey norman': (q) => `https://www.harveynorman.com.au/search?q=${q}`,
-  'officeworks': (q) => `https://www.officeworks.com.au/shop/officeworks/search?q=${q}`,
-  'kogan': (q) => `https://www.kogan.com/au/shop/?q=${q}`,
-  'big w': (q) => `https://www.bigw.com.au/search?q=${q}`,
-  'catch': (q) => `https://www.catch.com.au/search/?q=${q}`,
-  'the good guys': (q) => `https://www.thegoodguys.com.au/SearchDisplay?searchTerm=${q}`,
-  'bing lee': (q) => `https://www.binglee.com.au/search?q=${q}`,
-  'etsy': (q) => `https://www.etsy.com/search?q=${q}`,
-  'aliexpress': (q) => `https://www.aliexpress.com/wholesale?SearchText=${q}`,
-  'newegg': (q) => `https://www.newegg.com/p/pl?d=${q}`,
-  'target': (q) => `https://www.target.com/s?searchTerm=${q}`,
+  'amazon.com.au':    (q) => `https://www.amazon.com.au/s?k=${q}`,
+  'amazon.com':       (q) => `https://www.amazon.com/s?k=${q}`,
+  'amazon.co.uk':     (q) => `https://www.amazon.co.uk/s?k=${q}`,
+  'ebay':             (q) => `https://www.ebay.com.au/sch/i.html?_nkw=${q}`,
+  'ebay.com.au':      (q) => `https://www.ebay.com.au/sch/i.html?_nkw=${q}`,
+  'ebay.com':         (q) => `https://www.ebay.com/sch/i.html?_nkw=${q}`,
+  'walmart':          (q) => `https://www.walmart.com/search?q=${q}`,
+  'best buy':         (q) => `https://www.bestbuy.com/site/searchpage.jsp?st=${q}`,
+  'jb hi-fi':         (q) => `https://www.jbhifi.com.au/search?q=${q}`,
+  'jb hifi':          (q) => `https://www.jbhifi.com.au/search?q=${q}`,
+  'harvey norman':    (q) => `https://www.harveynorman.com.au/search?q=${q}`,
+  'officeworks':      (q) => `https://www.officeworks.com.au/shop/officeworks/search?q=${q}`,
+  'kogan':            (q) => `https://www.kogan.com/au/shop/?q=${q}`,
+  'big w':            (q) => `https://www.bigw.com.au/search?q=${q}`,
+  'catch':            (q) => `https://www.catch.com.au/search/?q=${q}`,
+  'the good guys':    (q) => `https://www.thegoodguys.com.au/SearchDisplay?searchTerm=${q}`,
+  'bing lee':         (q) => `https://www.binglee.com.au/search?q=${q}`,
+  'etsy':             (q) => `https://www.etsy.com/search?q=${q}`,
+  'aliexpress':       (q) => `https://www.aliexpress.com/wholesale?SearchText=${q}`,
+  'newegg':           (q) => `https://www.newegg.com/p/pl?d=${q}`,
+  'target':           (q) => `https://www.target.com/s?searchTerm=${q}`,
+  'cash converters':  (q) => `https://www.cashconverters.com.au/shop/search?q=${q}`,
+  'cashconverters':   (q) => `https://www.cashconverters.com.au/shop/search?q=${q}`,
 };
 
 function getFallbackUrl(marketplace: string, productName: string): string {
@@ -34,52 +36,65 @@ function getFallbackUrl(marketplace: string, productName: string): string {
   for (const [key, fn] of Object.entries(MARKETPLACE_SEARCH_URLS)) {
     if (m.includes(key) || key.includes(m)) return fn(q);
   }
-  return `https://www.google.com/search?q=${encodeURIComponent(productName + ' buy ' + marketplace)}`;
-}
-
-/**
- * Extract the best direct product URL from a SerpAPI shopping result.
- *
- * SerpAPI returns several possible link fields:
- *   - item.link          — usually the Google Shopping redirect URL (/shopping/product/...)
- *   - item.product_link  — direct URL to the retailer product page (best option)
- *   - item.offers        — array with individual offer links
- *
- * Google Shopping redirect URLs look like:
- *   https://www.google.com/shopping/product/1/specs?...
- *   https://www.google.com/aclk?...
- *
- * We want to return the retailer URL, not the Google one.
- */
-function extractDirectUrl(item: any): string {
-  // 1. product_link is the most reliable — direct retailer URL from SerpAPI
-  if (item.product_link && !isGoogleUrl(item.product_link)) {
-    return item.product_link;
-  }
-
-  // 2. Check offers array for a direct link
-  if (Array.isArray(item.offers)) {
-    for (const offer of item.offers) {
-      if (offer.link && !isGoogleUrl(offer.link)) return offer.link;
-      if (offer.direct_link && !isGoogleUrl(offer.direct_link)) return offer.direct_link;
-    }
-  }
-
-  // 3. item.link — if it's not a Google redirect, use it directly
-  if (item.link && !isGoogleUrl(item.link)) {
-    return item.link;
-  }
-
-  // 4. Nothing useful found
-  return '';
+  return `https://www.google.com/search?q=${encodeURIComponent(productName + ' ' + marketplace + ' buy')}`;
 }
 
 function isGoogleUrl(url: string): boolean {
+  if (!url) return true;
   try {
-    const hostname = new URL(url).hostname;
-    return hostname.includes('google.com') || hostname.includes('googleapis.com') || hostname.includes('gstatic.com');
+    const h = new URL(url).hostname;
+    return h.includes('google.com') || h.includes('googleapis.com') || h.includes('gstatic.com');
   } catch {
-    return false;
+    return true;
+  }
+}
+
+/**
+ * Step 2: Use SerpAPI google_product engine to get real seller offer links.
+ * Each product in Google Shopping has a product_id — this endpoint returns
+ * all sellers with their direct store URLs.
+ */
+async function getDirectUrlFromProductOffers(
+  productId: string,
+  marketplace: string,
+  serpApiKey: string,
+  country: string
+): Promise<string> {
+  try {
+    const params = new URLSearchParams({
+      engine: 'google_product',
+      product_id: productId,
+      api_key: serpApiKey,
+      hl: 'en',
+      gl: country,
+    });
+
+    const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+    if (!res.ok) return '';
+
+    const data = await res.json();
+    const sellers: any[] = data?.sellers_results?.online_sellers || [];
+    if (sellers.length === 0) return '';
+
+    const mLower = marketplace.toLowerCase();
+
+    // Try to match the exact marketplace first
+    for (const seller of sellers) {
+      const name = (seller.name || seller.seller || '').toLowerCase();
+      const link = seller.link || seller.base_price_link || '';
+      if (!link || isGoogleUrl(link)) continue;
+      if (name.includes(mLower) || mLower.includes(name)) return link;
+    }
+
+    // Otherwise return the first valid direct link
+    for (const seller of sellers) {
+      const link = seller.link || seller.base_price_link || '';
+      if (link && !isGoogleUrl(link)) return link;
+    }
+
+    return '';
+  } catch {
+    return '';
   }
 }
 
@@ -91,7 +106,6 @@ function parseDelivery(deliveryStr: string): {
 } {
   if (!deliveryStr) return { days: 7, date: '', cost: 0, tier: 'Standard' };
   const lower = deliveryStr.toLowerCase();
-  const isFree = lower.includes('free');
   const isExpress =
     lower.includes('express') ||
     lower.includes('next day') ||
@@ -106,23 +120,18 @@ function parseDelivery(deliveryStr: string): {
   let days = isExpress ? 2 : 7;
   if (dateStr) {
     try {
-      const now = new Date();
-      const parsed = new Date(`${dateStr} ${now.getFullYear()}`);
+      const parsed = new Date(`${dateStr} ${new Date().getFullYear()}`);
       if (!isNaN(parsed.getTime())) {
-        const diff = Math.ceil(
-          (parsed.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const diff = Math.ceil((parsed.getTime() - Date.now()) / 86400000);
         if (diff > 0 && diff < 60) days = diff;
       }
-    } catch {
-      /* keep fallback */
-    }
+    } catch { /* keep fallback */ }
   }
 
   const tier: 'Express' | 'Standard' | 'Economy' =
     isExpress || days <= 2 ? 'Express' : days <= 7 ? 'Standard' : 'Economy';
 
-  return { days, date: dateStr, cost: isFree ? 0 : 0, tier };
+  return { days, date: dateStr, cost: 0, tier };
 }
 
 export async function GET(req: NextRequest) {
@@ -137,11 +146,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing SERPAPI_KEY' }, { status: 500 });
 
   try {
+    // ── Step 1: Google Shopping search ────────────────────────────────────────
     const shoppingParams = new URLSearchParams({
       engine: 'google_shopping',
       q: query,
       api_key: serpApiKey,
-      num: '40',
+      num: '20',
       hl: 'en',
       gl: country,
     });
@@ -156,78 +166,90 @@ export async function GET(req: NextRequest) {
     }
 
     const shoppingData = await shoppingRes.json();
-    const rawResults: any[] = shoppingData.shopping_results || [];
-
-    const results = rawResults.filter(
+    const rawResults: any[] = (shoppingData.shopping_results || []).filter(
       (item: any) => (item.extracted_price || item.price) && item.source && item.title
     );
 
     const currency =
-      country === 'au'
-        ? 'AUD'
-        : country === 'gb'
-        ? 'GBP'
-        : country === 'us'
-        ? 'USD'
-        : country === 'eu'
-        ? 'EUR'
-        : 'AUD';
+      country === 'au' ? 'AUD' :
+      country === 'gb' ? 'GBP' :
+      country === 'us' ? 'USD' :
+      country === 'eu' ? 'EUR' : 'AUD';
 
-    const listings = results.slice(0, 20).map((item: any, idx: number) => {
-      const rawPrice =
-        typeof item.extracted_price === 'number'
-          ? item.extracted_price
-          : parseFloat(String(item.price || '0').replace(/[^0-9.]/g, ''));
+    // ── Step 2: Resolve direct product URLs in parallel ────────────────────────
+    // Cap at 12 to limit SerpAPI credit usage (1 credit per product lookup)
+    const topResults = rawResults.slice(0, 12);
 
-      const marketplace = String(item.source || 'Unknown');
+    const listings = await Promise.all(
+      topResults.map(async (item: any, idx: number) => {
+        const rawPrice =
+          typeof item.extracted_price === 'number'
+            ? item.extracted_price
+            : parseFloat(String(item.price || '0').replace(/[^0-9.]/g, ''));
 
-      // Get the best direct URL — no ScrapingBee needed
-      let directUrl = extractDirectUrl(item);
+        const marketplace = String(item.source || 'Unknown');
+        const productId: string = item.product_id || '';
+        let directUrl = '';
 
-      // If we still don't have a good URL, use the fallback search page
-      if (!directUrl) {
-        directUrl = getFallbackUrl(marketplace, query);
-      }
+        // Best path: google_product engine gives real seller URLs
+        if (productId) {
+          directUrl = await getDirectUrlFromProductOffers(
+            productId,
+            marketplace,
+            serpApiKey,
+            country
+          );
+        }
 
-      const deliveryStr = String(item.delivery || '');
-      const delivery = parseDelivery(deliveryStr);
+        // Fallback: check raw link fields from shopping result
+        if (!directUrl) {
+          for (const candidate of [item.product_link, item.link]) {
+            if (candidate && !isGoogleUrl(candidate)) {
+              directUrl = candidate;
+              break;
+            }
+          }
+        }
 
-      return {
-        id: `serpapi-${idx}-${Math.random().toString(36).slice(2, 7)}`,
-        title: String(item.title || query),
-        productName: String(item.title || query),
-        model: '',
-        color: '',
-        price: rawPrice,
-        originalPrice: rawPrice,
-        currency,
-        marketplace,
-        marketplaceLogo: '🛒',
-        listingUrl: directUrl,
-        condition: item.second_hand_condition ? 'Used' : ('New' as const),
-        location: country,
-        stockStatus: 'In Stock' as const,
-        sellerRating: typeof item.rating === 'number' ? item.rating : 4.5,
-        sellerReviews: typeof item.reviews === 'number' ? item.reviews : 0,
-        deliveryDays: delivery.days,
-        deliveryDate: delivery.date,
-        shippingTier: delivery.tier,
-        shippingCost: delivery.cost,
-        freeReturns: false,
-        imageUrl: item.thumbnail || '',
-        priceHistory: [],
-        deliveryOptions: [
-          { tier: delivery.tier, days: delivery.days, cost: delivery.cost },
-        ],
-        rawDelivery: deliveryStr,
-      };
-    });
+        // Last resort: marketplace search page for this query
+        if (!directUrl) {
+          directUrl = getFallbackUrl(marketplace, query);
+        }
+
+        const delivery = parseDelivery(String(item.delivery || ''));
+
+        return {
+          id: `serpapi-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+          title: String(item.title || query),
+          productName: String(item.title || query),
+          model: '',
+          color: '',
+          price: rawPrice,
+          originalPrice: rawPrice,
+          currency,
+          marketplace,
+          marketplaceLogo: '🛒',
+          listingUrl: directUrl,
+          condition: item.second_hand_condition ? 'Used' : ('New' as const),
+          location: country,
+          stockStatus: 'In Stock' as const,
+          sellerRating: typeof item.rating === 'number' ? item.rating : 4.5,
+          sellerReviews: typeof item.reviews === 'number' ? item.reviews : 0,
+          deliveryDays: delivery.days,
+          deliveryDate: delivery.date,
+          shippingTier: delivery.tier,
+          shippingCost: delivery.cost,
+          freeReturns: false,
+          imageUrl: item.thumbnail || '',
+          priceHistory: [],
+          deliveryOptions: [{ tier: delivery.tier, days: delivery.days, cost: delivery.cost }],
+          rawDelivery: String(item.delivery || ''),
+        };
+      })
+    );
 
     return NextResponse.json({ listings });
   } catch (err) {
-    return NextResponse.json(
-      { error: 'Server error', detail: String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Server error', detail: String(err) }, { status: 500 });
   }
 }
