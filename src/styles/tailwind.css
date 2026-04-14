@@ -2,21 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   /* ── LIGHT (default) ── */
   :root {
     --primary: 218 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --background: 210 20% 97%;
-    --foreground: 220 25% 10%;
+    --background: 0 0% 97%;
+    --foreground: 0 0% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
-    --muted: 210 16% 93%;
-    --muted-foreground: 220 10% 52%;
-    --border: 210 16% 88%;
-    --input: 210 16% 93%;
+    --card-foreground: 0 0% 8%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 48%;
+    --border: 0 0% 88%;
+    --input: 0 0% 93%;
     --ring: 218 100% 50%;
     --accent: 218 100% 50%;
     --accent-foreground: 0 0% 100%;
@@ -25,21 +23,20 @@
     --success: 152 60% 40%;
     --warning: 38 92% 50%;
     --radius: 0.875rem;
-    --noise-opacity: 0.025;
   }
 
   /* ── DARK ── */
   [data-mode="dark"] {
     --primary: 218 100% 62%;
     --primary-foreground: 0 0% 100%;
-    --background: 222 20% 8%;
-    --foreground: 210 15% 92%;
-    --card: 222 18% 11%;
-    --card-foreground: 210 15% 92%;
-    --muted: 222 15% 16%;
-    --muted-foreground: 220 10% 52%;
-    --border: 222 15% 18%;
-    --input: 222 15% 16%;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 92%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 92%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 52%;
+    --border: 0 0% 16%;
+    --input: 0 0% 13%;
     --ring: 218 100% 62%;
     --accent: 218 100% 62%;
     --accent-foreground: 0 0% 100%;
@@ -48,7 +45,6 @@
     --success: 152 55% 46%;
     --warning: 38 85% 55%;
     --radius: 0.875rem;
-    --noise-opacity: 0.04;
   }
 
   * { border-color: hsl(var(--border)); box-sizing: border-box; }
@@ -58,38 +54,33 @@
   body {
     background: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: 'Inter', sans-serif;
+    /* Helvetica stack */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  /* Subtle noise texture overlay */
+  /* Subtle dot grid background — inspired by the bento/canvas dot aesthetic */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: var(--noise-opacity);
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    background-size: 200px 200px;
+    background-image: radial-gradient(circle, hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
-  /* Dark mode subtle grid */
-  [data-mode="dark"] body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image:
-      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
-    background-size: 40px 40px;
+  [data-mode="dark"] body::before {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
   }
 
-  h1, h2, h3 { font-family: 'Instrument Serif', serif; line-height: 1.1; }
+  h1, h2, h3, h4 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    line-height: 1.1;
+  }
 }
 
 /* ── Scrollbar ── */
@@ -109,14 +100,9 @@
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
 }
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-6px); }
-}
 
-.animate-fade-up  { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-fade-up  { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
 .animate-spin-sm  { animation: spin 0.75s linear infinite; }
-.animate-float    { animation: float 3s ease-in-out infinite; }
 
 /* ── Search glow ── */
 .search-glow {
@@ -124,17 +110,11 @@
   border: 1.5px solid hsl(var(--border));
   border-radius: 100px;
   transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
 .search-glow:focus-within {
   border-color: hsl(var(--primary) / 0.5);
   box-shadow: 0 0 0 4px hsl(var(--primary) / 0.08), 0 2px 20px rgba(0,0,0,0.08);
-}
-[data-mode="dark"] .search-glow {
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-}
-[data-mode="dark"] .search-glow:focus-within {
-  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15), 0 2px 20px rgba(0,0,0,0.3);
 }
 
 /* ── Location glow ── */
@@ -143,7 +123,6 @@
   border: 1.5px solid hsl(var(--border));
   border-radius: 16px;
   transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
 }
 .location-glow:focus-within {
   border-color: hsl(var(--primary) / 0.4);
@@ -154,7 +133,7 @@
 .btn-primary {
   background: hsl(var(--primary));
   color: white;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 600;
   font-size: 14px;
   padding: 10px 22px;
@@ -177,15 +156,14 @@
 .btn-ghost {
   background: transparent;
   color: hsl(var(--muted-foreground));
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 12px;
   font-weight: 500;
   padding: 6px 14px;
   border-radius: 100px;
   border: 1.5px solid hsl(var(--border));
   cursor: pointer;
   transition: all 0.15s;
-  letter-spacing: -0.01em;
 }
 .btn-ghost:hover {
   color: hsl(var(--foreground));
@@ -199,22 +177,20 @@
   font-weight: 600;
 }
 
-/* ── Product card ── */
+/* ── Product card — bento style ── */
 .product-card {
   background: hsl(var(--card));
-  border: 1.5px solid hsl(var(--border));
-  border-radius: 20px;
+  border: 1px solid hsl(var(--border) / 0.8);
+  border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), border-color 0.2s, box-shadow 0.2s;
   position: relative;
+  will-change: transform;
 }
 .product-card:hover {
-  transform: translateY(-4px);
-  border-color: hsl(var(--primary) / 0.35);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.1), 0 0 0 1px hsl(var(--primary) / 0.1);
-}
-[data-mode="dark"] .product-card:hover {
-  box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px hsl(var(--primary) / 0.2);
+  transform: translateY(-2px);
+  border-color: hsl(var(--border));
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 
 /* ── Badge ── */
@@ -222,13 +198,12 @@
   display: inline-flex; align-items: center; gap: 3px;
   padding: 3px 9px; border-radius: 100px;
   font-size: 11px; font-weight: 600; letter-spacing: -0.01em;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 .badge-primary  { background: hsl(var(--primary) / 0.1);     color: hsl(var(--primary));     border: 1px solid hsl(var(--primary) / 0.2); }
 .badge-success  { background: hsl(var(--success) / 0.1);     color: hsl(var(--success));     border: 1px solid hsl(var(--success) / 0.2); }
 .badge-accent   { background: hsl(var(--accent)  / 0.1);     color: hsl(var(--accent));      border: 1px solid hsl(var(--accent)  / 0.2); }
 .badge-warning  { background: hsl(var(--warning)  / 0.1);    color: hsl(var(--warning));     border: 1px solid hsl(var(--warning) / 0.2); }
-.badge-danger   { background: hsl(var(--destructive) / 0.1); color: hsl(var(--destructive)); border: 1px solid hsl(var(--destructive) / 0.2); }
 
 /* ── Progress ── */
 .progress-track { height: 2px; background: hsl(var(--border)); }
@@ -247,6 +222,8 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid hsl(var(--border));
+  position: relative;
+  z-index: 40;
 }
 
 /* ── Bottom nav ── */
@@ -284,5 +261,4 @@
   .bg-muted\/20           { background-color: hsl(var(--muted) / 0.2); }
   .bg-muted\/60           { background-color: hsl(var(--muted) / 0.6); }
   .tabular-nums           { font-variant-numeric: tabular-nums; }
-  .font-serif             { font-family: 'Instrument Serif', serif; }
 }
