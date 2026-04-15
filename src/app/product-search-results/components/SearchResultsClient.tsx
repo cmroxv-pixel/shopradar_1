@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useScroll, useTransform, useSpring, motion } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
 import AddressSelector from './AddressSelector';
 import FilterPanel from './FilterPanel';
@@ -137,6 +138,47 @@ function AppMockup() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+
+// ── Scroll-animated mockup ────────────────────────────────
+function ScrollMockup() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+
+  const rotateX = useTransform(scrollYProgress, [0, 0.4], [22, 0]);
+  const rotateXSpring = useSpring(rotateX, { stiffness: 60, damping: 20 });
+
+  const scale = useTransform(scrollYProgress, [0, 0.4], [0.88, 1]);
+  const scaleSpring = useSpring(scale, { stiffness: 60, damping: 20 });
+
+  const translateY = useTransform(scrollYProgress, [0, 0.4], [60, 0]);
+  const translateYSpring = useSpring(translateY, { stiffness: 60, damping: 20 });
+
+  return (
+    <div ref={ref} style={{
+      maxWidth: 1200, margin: '0 auto -60px', padding: '0 24px',
+      maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+      WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+      perspective: '1200px',
+    }}>
+      <motion.div
+        style={{
+          rotateX: rotateXSpring,
+          scale: scaleSpring,
+          y: translateYSpring,
+          transformOrigin: 'top center',
+          boxShadow: '0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026',
+          borderRadius: 20,
+          overflow: 'hidden',
+          border: '1.5px solid hsl(var(--border))',
+          background: 'hsl(var(--card))',
+        }}
+      >
+        <AppMockup />
+      </motion.div>
     </div>
   );
 }
@@ -348,28 +390,8 @@ export default function SearchResultsClient() {
           </div>
         </div>
 
-        {/* ── Angled app mockup — hero-section-9 style ── */}
-        <div style={{
-          maxWidth: 1200,
-          margin: '0 auto -80px',
-          padding: '0 24px',
-          maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
-        }}>
-          <div style={{ perspective: '1200px' }}>
-            <div style={{ transform: 'rotateX(18deg)', transformOrigin: 'top center' }}>
-              <div style={{
-                borderRadius: 20,
-                overflow: 'hidden',
-                border: '1.5px solid hsl(var(--border))',
-                boxShadow: '0 40px 120px rgba(0,0,0,0.15)',
-                background: 'hsl(var(--card))',
-              }}>
-                <AppMockup />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ── Scroll-animated app mockup ── */}
+        <ScrollMockup />
       </section>
 
       {/* ── Marketplace logos strip ── */}
