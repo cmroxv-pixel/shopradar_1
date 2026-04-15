@@ -1,4 +1,6 @@
 'use client';
+import { useAuth } from '@/contexts/AuthContext';
+import { getEffectivePlan, canUseFeature } from '@/lib/plan';
 import React, { useState, useCallback, useRef } from 'react';
 import type { Listing } from './mockData';
 import AppImage from '@/components/ui/AppImage';
@@ -76,10 +78,16 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
 
   const verdictColor = rec?.verdict === 'Buy Now' ? 'hsl(var(--success))' : rec?.verdict === 'Wait' ? 'hsl(var(--warning))' : 'hsl(var(--primary))';
 
+  const { user } = useAuth();
+  const plan = getEffectivePlan(user);
+  const hasAI = canUseFeature(plan, 'ai_recommendations');
+
   return (
     <div style={{ marginTop: 6 }}>
-      <button onClick={getAnalysis} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, cursor: 'pointer', background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--muted-foreground))', fontFamily: 'Inter, sans-serif', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s' }}>
-        {loading ? '…' : '✦'} AI {shown && !loading ? 'Hide' : 'Analysis'}
+      <button onClick={hasAI ? getAnalysis : () => window.location.href = '/pricing'}
+        title={hasAI ? '' : 'Upgrade to Pro or Radar+ to unlock AI analysis'}
+        style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, cursor: 'pointer', background: hasAI ? 'hsl(var(--muted))' : 'hsl(var(--primary) / 0.08)', border: `1px solid ${hasAI ? 'hsl(var(--border))' : 'hsl(var(--primary) / 0.3)'}`, color: hasAI ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))', fontFamily: 'Inter, sans-serif', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s' }}>
+        {loading ? '…' : '✦'} {hasAI ? (shown && !loading ? 'Hide AI' : 'AI Analysis') : '✦ Pro — AI Analysis'}
       </button>
       {shown && !loading && rec && (
         <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, background: 'hsl(var(--muted) / 0.5)', border: '1px solid hsl(var(--border))' }}>
