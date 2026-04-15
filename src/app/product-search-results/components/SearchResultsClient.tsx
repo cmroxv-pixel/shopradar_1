@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useScroll, useTransform, useSpring, motion } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
 import AddressSelector from './AddressSelector';
+import BorderGlow from '@/components/BorderGlow';
+import '@/components/BorderGlow.css';
 import FilterPanel from './FilterPanel';
 import ResultsGrid from './ResultsGrid';
 import ComparisonDrawer from './ComparisonDrawer';
@@ -91,7 +93,7 @@ function AppMockup() {
       {/* Mock topbar */}
       <div style={{ padding: '12px 18px', background: 'hsl(var(--background) / 0.8)', borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/logo.webp" alt="ShopRadar" style={{ width: 24, height: 24, borderRadius: 0, filter: "brightness(0) invert(1)" }} />
+          <div style={{ width: 24, height: 24, mixBlendMode: "screen", borderRadius: 4, overflow: "hidden", flexShrink: 0 }}><img src="/logo.webp" alt="ShopRadar" style={{ width: 24, height: 24, display: "block" }} /></div>
           <span style={{ fontSize: 12, fontWeight: 700, color: 'hsl(var(--foreground))' }}>ShopRadar</span>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -495,6 +497,7 @@ export default function SearchResultsClient() {
               {isSearching ? 'Searching…' : 'Search'}
             </button>
           </div>
+          </BorderGlow>
 
           {/* Recent searches */}
           {showRecent && recentSearches.length > 0 && (
