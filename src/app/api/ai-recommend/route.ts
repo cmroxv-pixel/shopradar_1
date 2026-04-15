@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PostHog } from 'posthog-node';
+
+const posthogClient = new PostHog('phc_mDWJLx7qC9EjyyA4ycrDWNk9iucE4VmbjzzpLE7xReUR', {
+  host: 'https://us.i.posthog.com',
+  flushAt: 1,
+  flushInterval: 0,
+});
 
 export async function POST(req: NextRequest) {
-  const { query, currentPrice, priceHistory, marketplace } = await req.json();
+  const { query, currentPrice, priceHistory, marketplace, userId } = await req.json();
 
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!geminiKey) return NextResponse.json({ recommendation: null }, { status: 200 });
+
+  const startTime = Date.now();
 
   try {
     const historyText = priceHistory.length > 0
@@ -40,6 +49,26 @@ Only respond with the JSON object, nothing else.`;
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const clean = text.replace(/```json|```/g, '').trim();
     const recommendation = JSON.parse(clean);
+    const latencyMs = Date.now() - startTime;
+
+    // Track in PostHog server-side
+    posthogClient.capture({
+      distinctId: userId || 'anonymous',
+      event: 'ai_analysis_completed',
+      properties: {
+        query, marketplace,
+        current_price: currentPrice,
+        verdict: recommendation.verdict,
+        confidence: recommendation.confidence,
+        has_price_history: priceHistory.length > 0,
+        history_points: priceHistory.length,
+        latency_ms: latencyMs,
+        model: 'gemini-1.5-flash',
+        timestamp: new Date().toISOString(),
+      },
+    });
+    await posthogClient.flushAsync();
+
     return NextResponse.json({ recommendation });
   } catch {
     return NextResponse.json({ recommendation: null });
