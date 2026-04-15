@@ -3,11 +3,14 @@ export default function DarkModeInit() {
     (function() {
       try {
         var saved = localStorage.getItem('shopradar-mode');
-        if (saved === 'dark') {
+        if (saved === 'light') {
+          document.documentElement.removeAttribute('data-mode');
+        } else {
           document.documentElement.setAttribute('data-mode', 'dark');
         }
-        // default is light (no attribute needed)
-      } catch(e) {}
+      } catch(e) {
+        document.documentElement.setAttribute('data-mode', 'dark');
+      }
     })();
   `;
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
