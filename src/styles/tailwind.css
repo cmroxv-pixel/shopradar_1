@@ -232,10 +232,10 @@
 }
 
 /* ── Bottom nav ── */
+/* Floating dock */
 .bottom-nav {
-  background: hsl(var(--background) / 0.92);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid hsl(var(--border));
+  background: transparent;
+  border: none;
 }
 
 /* ── Tailwind compat ── */
