@@ -4,7 +4,7 @@ import SearchResultsWrapper from './components/SearchResultsWrapper';
 
 export default function ProductSearchResultsPage() {
   return (
-    <AppLayout dotVariant="search">
+    <AppLayout dotVariant="search" useDither>
       <SearchResultsWrapper />
     </AppLayout>
   );
