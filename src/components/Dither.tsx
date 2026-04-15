@@ -29,132 +29,147 @@ export default function Dither({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+
+    // Set canvas size
+    const setSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    setSize();
+
+    const gl = canvas.getContext('webgl') as WebGLRenderingContext;
     if (!gl) return;
 
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
     const vertSrc = `
-      attribute vec2 a_position;
-      void main() { gl_Position = vec4(a_position, 0, 1); }
+      attribute vec2 a_pos;
+      void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
     `;
 
     const fragSrc = `
-      precision highp float;
-      uniform vec2 u_resolution;
+      precision mediump float;
+      uniform vec2 u_res;
       uniform float u_time;
       uniform float u_speed;
       uniform float u_freq;
       uniform float u_amp;
       uniform vec3 u_color;
       uniform vec2 u_mouse;
-      uniform float u_mouseRadius;
-      uniform float u_pixelSize;
-      uniform float u_colorNum;
+      uniform float u_mrad;
+      uniform float u_px;
+      uniform float u_cnum;
 
-      vec4 mod289(vec4 x){return x-floor(x*(1./289.))*289.;}
-      vec4 perm(vec4 x){return mod289(((x*34.)+1.)*x);}
-      float noise(vec2 P){
-        vec4 Pi=floor(P.xyxy)+vec4(0,0,1,1);
-        vec4 Pf=fract(P.xyxy)-vec4(0,0,1,1);
-        Pi=mod289(Pi);
-        vec4 ix=Pi.xzxz, iy=Pi.yyww;
-        vec4 fx=Pf.xzxz, fy=Pf.yyww;
-        vec4 i=perm(perm(ix)+iy);
-        vec4 gx=fract(i*(1./41.))*2.-1.;
-        vec4 gy=abs(gx)-.5;
-        gx-=floor(gx+.5);
-        vec2 g00=vec2(gx.x,gy.x),g10=vec2(gx.y,gy.y);
-        vec2 g01=vec2(gx.z,gy.z),g11=vec2(gx.w,gy.w);
-        vec4 n=1.79284-.85373*vec4(dot(g00,g00),dot(g01,g01),dot(g10,g10),dot(g11,g11));
-        g00*=n.x;g01*=n.y;g10*=n.z;g11*=n.w;
-        vec2 f=Pf.xy*Pf.xy*Pf.xy*(Pf.xy*(Pf.xy*6.-15.)+10.);
-        float n00=dot(g00,fx.xw),n10=dot(g10,vec2(fx.y,fy.y));
-        float n01=dot(g01,vec2(fx.z,fy.z)),n11=dot(g11,fx.yw);
-        vec2 nx=mix(vec2(dot(g00,fx.xw),dot(g01,vec2(fx.z,fy.z))),vec2(dot(g10,vec2(fx.y,fy.y)),dot(g11,fx.yw)),f.x);
-        return 2.3*mix(nx.x,nx.y,f.y);
+      float rand(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
       }
 
-      float fbm(vec2 p){
-        float v=0.,a=1.,f=u_freq;
-        for(int i=0;i<4;i++){v+=a*abs(noise(p));p*=f;a*=u_amp;}
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = rand(i);
+        float b = rand(i + vec2(1,0));
+        float c = rand(i + vec2(0,1));
+        float d = rand(i + vec2(1,1));
+        return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+      }
+
+      float fbm(vec2 p) {
+        float v = 0.0;
+        float a = 0.5;
+        for (int i = 0; i < 5; i++) {
+          v += a * noise(p);
+          p *= u_freq;
+          a *= u_amp;
+        }
         return v;
       }
 
-      const float bayer[64] = float[64](
-        0.,48.,12.,60.,3.,51.,15.,63.,
-        32.,16.,44.,28.,35.,19.,47.,31.,
-        8.,56.,4.,52.,11.,59.,7.,55.,
-        40.,24.,36.,20.,43.,27.,39.,23.,
-        2.,50.,14.,62.,1.,49.,13.,61.,
-        34.,18.,46.,30.,33.,17.,45.,29.,
-        10.,58.,6.,54.,9.,57.,5.,53.,
-        42.,26.,38.,22.,41.,25.,37.,21.
-      );
+      void main() {
+        vec2 coord = floor(gl_FragCoord.xy / u_px) * u_px;
+        vec2 uv = (coord / u_res) * 2.0 - 1.0;
+        uv.x *= u_res.x / u_res.y;
 
-      void main(){
-        vec2 pixel = floor(gl_FragCoord.xy / u_pixelSize) * u_pixelSize;
-        vec2 uv = pixel / u_resolution - 0.5;
-        uv.x *= u_resolution.x / u_resolution.y;
+        vec2 p = uv + vec2(u_time * u_speed);
+        float f = fbm(p + fbm(p + fbm(p)));
 
-        vec2 p2 = uv - u_time * u_speed;
-        float f = fbm(uv + fbm(p2));
+        // Mouse interaction
+        vec2 m = (u_mouse / u_res) * 2.0 - 1.0;
+        m.y *= -1.0;
+        m.x *= u_res.x / u_res.y;
+        float dist = length(uv - m);
+        f -= 0.4 * (1.0 - smoothstep(0.0, u_mrad, dist));
 
-        vec2 m = (u_mouse / u_resolution - 0.5) * vec2(1,-1);
-        m.x *= u_resolution.x / u_resolution.y;
-        float d = length(uv - m);
-        f -= 0.5 * (1. - smoothstep(0., u_mouseRadius, d));
+        // Dither
+        vec2 sc = floor(gl_FragCoord.xy / u_px);
+        int bx = int(mod(sc.x, 4.0));
+        int by = int(mod(sc.y, 4.0));
+        float threshold = 0.0;
+        if (bx == 0 && by == 0) threshold = 0.0/16.0;
+        else if (bx == 2 && by == 0) threshold = 8.0/16.0;
+        else if (bx == 0 && by == 2) threshold = 2.0/16.0;
+        else if (bx == 2 && by == 2) threshold = 10.0/16.0;
+        else if (bx == 1 && by == 1) threshold = 5.0/16.0;
+        else if (bx == 3 && by == 1) threshold = 13.0/16.0;
+        else if (bx == 1 && by == 3) threshold = 7.0/16.0;
+        else if (bx == 3 && by == 3) threshold = 15.0/16.0;
+        else if (bx == 0 && by == 1) threshold = 4.0/16.0;
+        else if (bx == 2 && by == 1) threshold = 12.0/16.0;
+        else if (bx == 0 && by == 3) threshold = 6.0/16.0;
+        else if (bx == 2 && by == 3) threshold = 14.0/16.0;
+        else if (bx == 1 && by == 0) threshold = 3.0/16.0;
+        else if (bx == 3 && by == 0) threshold = 11.0/16.0;
+        else if (bx == 1 && by == 2) threshold = 1.0/16.0;
+        else threshold = 9.0/16.0;
 
-        vec3 col = mix(vec3(0.), u_color, f);
+        float step = 1.0 / (u_cnum - 1.0);
+        float dithered = floor((f + (threshold - 0.5) * step) * (u_cnum - 1.0) + 0.5) / (u_cnum - 1.0);
+        dithered = clamp(dithered, 0.0, 1.0);
 
-        int xi = int(mod(gl_FragCoord.x / u_pixelSize, 8.));
-        int yi = int(mod(gl_FragCoord.y / u_pixelSize, 8.));
-        float threshold = bayer[yi*8+xi] / 64. - 0.25;
-        float step = 1. / (u_colorNum - 1.);
-        col += threshold * step;
-        col = clamp(col - 0.2, 0., 1.);
-        col = floor(col * (u_colorNum - 1.) + 0.5) / (u_colorNum - 1.);
-
-        gl_FragColor = vec4(col, 1.);
+        vec3 col = u_color * dithered;
+        gl_FragColor = vec4(col, 1.0);
       }
     `;
 
-    const compile = (type: number, src: string) => {
+    const compileShader = (type: number, src: string) => {
       const s = gl.createShader(type)!;
-      gl.shaderSource(s, src); gl.compileShader(s); return s;
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
     };
 
     const prog = gl.createProgram()!;
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, vertSrc));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fragSrc));
+    gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, vertSrc));
+    gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, fragSrc));
     gl.linkProgram(prog);
     gl.useProgram(prog);
 
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
-    const loc = gl.getAttribLocation(prog, 'a_position');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const aPos = gl.getAttribLocation(prog, 'a_pos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-    const u = (name: string) => gl.getUniformLocation(prog, name);
-    const uRes = u('u_resolution'), uTime = u('u_time'), uSpeed = u('u_speed');
+    const u = (n: string) => gl.getUniformLocation(prog, n);
+    const uRes = u('u_res'), uTime = u('u_time'), uSpeed = u('u_speed');
     const uFreq = u('u_freq'), uAmp = u('u_amp'), uColor = u('u_color');
-    const uMouse = u('u_mouse'), uMouseR = u('u_mouseRadius');
-    const uPixel = u('u_pixelSize'), uColorNum = u('u_colorNum');
+    const uMouse = u('u_mouse'), uMrad = u('u_mrad');
+    const uPx = u('u_px'), uCnum = u('u_cnum');
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    const onResize = () => {
+      setSize();
       gl.viewport(0, 0, canvas.width, canvas.height);
     };
-    resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', onResize);
 
     const onMouseMove = (e: MouseEvent) => {
       mouse.current = { x: e.clientX, y: e.clientY };
     };
     if (enableMouseInteraction) window.addEventListener('mousemove', onMouseMove);
 
-    let start = performance.now();
+    const start = performance.now();
     const render = () => {
       const t = (performance.now() - start) / 1000;
       gl.uniform2f(uRes, canvas.width, canvas.height);
@@ -164,9 +179,9 @@ export default function Dither({
       gl.uniform1f(uAmp, waveAmplitude);
       gl.uniform3f(uColor, waveColor[0], waveColor[1], waveColor[2]);
       gl.uniform2f(uMouse, mouse.current.x, canvas.height - mouse.current.y);
-      gl.uniform1f(uMouseR, mouseRadius);
-      gl.uniform1f(uPixel, pixelSize);
-      gl.uniform1f(uColorNum, colorNum);
+      gl.uniform1f(uMrad, mouseRadius);
+      gl.uniform1f(uPx, pixelSize);
+      gl.uniform1f(uCnum, colorNum);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       animRef.current = requestAnimationFrame(render);
     };
@@ -174,15 +189,21 @@ export default function Dither({
 
     return () => {
       cancelAnimationFrame(animRef.current);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener('resize', onResize);
       if (enableMouseInteraction) window.removeEventListener('mousemove', onMouseMove);
     };
-  }, [waveSpeed, waveFrequency, waveAmplitude, waveColor, colorNum, pixelSize, enableMouseInteraction, mouseRadius]);
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      style={{
+        position: 'absolute',
+        top: 0, left: 0,
+        width: '100%',
+        height: '100%',
+        display: 'block',
+      }}
     />
   );
 }
