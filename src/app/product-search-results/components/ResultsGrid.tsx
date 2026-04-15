@@ -57,6 +57,9 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
   query: string; currentPrice: number;
   priceHistory: { date: string; price: number }[]; marketplace: string;
 }) {
+  const { user } = useAuth();
+  const plan = getEffectivePlan(user);
+  const hasAI = canUseFeature(plan, 'ai_recommendations');
   const [rec, setRec] = useState<{ verdict: string; reason: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [shown, setShown] = useState(false);
@@ -77,11 +80,6 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
   }, [shown, query, currentPrice, priceHistory, marketplace]);
 
   const verdictColor = rec?.verdict === 'Buy Now' ? 'hsl(var(--success))' : rec?.verdict === 'Wait' ? 'hsl(var(--warning))' : 'hsl(var(--primary))';
-
-  const { user } = useAuth();
-  const plan = getEffectivePlan(user);
-  const hasAI = canUseFeature(plan, 'ai_recommendations');
-  const hasDealScore = canUseFeature(plan, 'deal_score');
 
   return (
     <div style={{ marginTop: 6 }}>
