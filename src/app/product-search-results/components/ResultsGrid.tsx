@@ -1,6 +1,6 @@
 'use client';
 import { useAuth } from '@/contexts/AuthContext';
-import { getEffectivePlan, canUseFeature, PLAN_LIMITS } from '@/lib/plan';
+import { getEffectivePlan, canUseFeature } from '@/lib/plan';
 import React, { useState, useCallback, useRef } from 'react';
 import type { Listing } from './mockData';
 import AppImage from '@/components/ui/AppImage';
@@ -57,6 +57,9 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
   query: string; currentPrice: number;
   priceHistory: { date: string; price: number }[]; marketplace: string;
 }) {
+  const { user } = useAuth();
+  const plan = getEffectivePlan(user);
+  const hasAI = canUseFeature(plan, 'ai_recommendations');
   const [rec, setRec] = useState<{ verdict: string; reason: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [shown, setShown] = useState(false);
@@ -77,10 +80,6 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
   }, [shown, query, currentPrice, priceHistory, marketplace]);
 
   const verdictColor = rec?.verdict === 'Buy Now' ? 'hsl(var(--success))' : rec?.verdict === 'Wait' ? 'hsl(var(--warning))' : 'hsl(var(--primary))';
-
-  const { user } = useAuth();
-  const plan = getEffectivePlan(user);
-  const hasAI = canUseFeature(plan, 'ai_recommendations');
 
   return (
     <div style={{ marginTop: 6 }}>
@@ -107,10 +106,10 @@ function DealScore({ query, price, priceHistory, marketplace, rating, reviews, s
 }) {
   const { user } = useAuth();
   const plan = getEffectivePlan(user);
-  const [data, setData] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [shown, setShown] = React.useState(false);
   const hasFeature = canUseFeature(plan, 'deal_score');
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [shown, setShown] = useState(false);
 
   const run = async () => {
     if (shown) { setShown(false); return; }
