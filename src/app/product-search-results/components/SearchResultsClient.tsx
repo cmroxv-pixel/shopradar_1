@@ -6,11 +6,10 @@ import AddressSelector from './AddressSelector';
 import FilterPanel from './FilterPanel';
 import ResultsGrid from './ResultsGrid';
 import ComparisonDrawer from './ComparisonDrawer';
-import ThemeSwitcherPanel from './ThemeSwitcherPanel';
 import CurrencyConverter from './CurrencyConverter';
 import CategoryFilter from './CategoryFilter';
 import { type Listing } from './mockData';
-import { SlidersHorizontal, Palette, TrendingDown, Zap, Globe, ChevronDown } from 'lucide-react';
+import { SlidersHorizontal, TrendingDown, Zap, Globe, ChevronDown } from 'lucide-react';
 
 const STEPS = [
   { msg: 'Querying Google Shopping…',          pct: 12 },
@@ -184,7 +183,6 @@ export default function SearchResultsClient() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [sortBy, setSortBy] = useState<'price' | 'delivery' | 'rating' | 'proximity'>('price');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
   const [compareItems, setCompareItems] = useState<Listing[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const [address, setAddress] = useState({ country: '', state: '', suburb: '', full: '' });
@@ -419,17 +417,13 @@ export default function SearchResultsClient() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <CurrencyConverter selectedCurrency={displayCurrency} onCurrencyChange={(c, r) => { setDisplayCurrency(c); setExchangeRate(r); }} />
-            <button onClick={() => { setFilterOpen(!filterOpen); setThemeOpen(false); }}
+            <button onClick={() => { setFilterOpen(!filterOpen); }}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 100, border: `1.5px solid ${filterOpen ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`, background: filterOpen ? 'hsl(var(--primary) / 0.08)' : 'hsl(var(--card))', color: filterOpen ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))', cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.15s' }}>
               <SlidersHorizontal size={14} />
               Filters
               {activeFilterCount > 0 && <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'white', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{activeFilterCount}</span>}
             </button>
-            <button onClick={() => { setThemeOpen(!themeOpen); setFilterOpen(false); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 100, border: `1.5px solid ${themeOpen ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`, background: themeOpen ? 'hsl(var(--primary) / 0.08)' : 'hsl(var(--card))', color: themeOpen ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))', cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.15s' }}>
-              <Palette size={14} />
-              Theme
-            </button>
+
           </div>
         </div>
 
@@ -438,7 +432,6 @@ export default function SearchResultsClient() {
           <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
         </div>
 
-        {themeOpen && <ThemeSwitcherPanel onClose={() => setThemeOpen(false)} />}
         {filterOpen && (
           <div style={{ marginBottom: 16, maxWidth: 320 }}>
             <FilterPanel priceRange={priceRange} onPriceRange={setPriceRange} selectedMarketplaces={selectedMarketplaces} onMarketplaces={setSelectedMarketplaces} deliveryFilter={deliveryFilter} onDeliveryFilter={setDeliveryFilter} minRating={minRating} onMinRating={setMinRating} onClose={() => setFilterOpen(false)} />
