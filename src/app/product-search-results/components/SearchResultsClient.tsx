@@ -89,13 +89,7 @@ function AppMockup() {
       {/* Mock topbar */}
       <div style={{ padding: '12px 18px', background: 'hsl(var(--background) / 0.8)', borderBottom: '1px solid hsl(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-              <circle cx="3" cy="5.5" r="2" fill="white" opacity="0.95"/>
-              <circle cx="8" cy="3" r="1.5" fill="white" opacity="0.8"/>
-              <circle cx="8" cy="8" r="1.5" fill="white" opacity="0.8"/>
-            </svg>
-          </div>
+          <img src="/logo.webp" alt="ShopRadar" style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover' }} />
           <span style={{ fontSize: 12, fontWeight: 700, color: 'hsl(var(--foreground))' }}>ShopRadar</span>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
