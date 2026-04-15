@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ModeToggle from './ModeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { getEffectivePlan, PLAN_LABELS } from '@/lib/plan';
 
 const ADMIN_ID = '2c8fdd0b-b3b6-4216-a541-1cf40490658a';
 
@@ -64,6 +65,9 @@ function UserAvatar() {
   const initial = name.charAt(0).toUpperCase();
   const email: string = user.email || '';
   const isAdmin = user.id === ADMIN_ID;
+  const plan = getEffectivePlan(user);
+  const planLabel = PLAN_LABELS[plan];
+  const planColor = plan === 'radar_plus' ? 'hsl(var(--primary))' : plan === 'pro' ? 'hsl(var(--success))' : 'hsl(var(--muted-foreground))';
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -115,9 +119,12 @@ function UserAvatar() {
                       {user.user_metadata.full_name}
                     </p>
                   )}
-                  {isAdmin && (
-                    <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700, flexShrink: 0 }}>ADMIN</span>
-                  )}
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {isAdmin && (
+                      <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700, flexShrink: 0 }}>ADMIN</span>
+                    )}
+                    <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: planColor, color: 'white', fontWeight: 700, flexShrink: 0, opacity: plan === 'free' ? 0.5 : 1 }}>{planLabel}</span>
+                  </div>
                 </div>
                 <p style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {email}
