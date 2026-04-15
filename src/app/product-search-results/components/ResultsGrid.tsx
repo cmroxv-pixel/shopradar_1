@@ -480,7 +480,7 @@ function ProductCard({
               <Sparkline data={priceHistory} />
               {priceHistory.length >= 2 && (
                 <AIRecommendation query={listing.productName} currentPrice={listing.price} priceHistory={priceHistory} marketplace={listing.marketplace} />
-        <DealScore query={listing.productName} price={listing.price} priceHistory={priceHistory} marketplace={listing.marketplace} rating={listing.sellerRating} reviews={listing.sellerReviews} shippingTier={listing.shippingTier} />
+                <DealScore query={listing.productName} price={listing.price} priceHistory={priceHistory} marketplace={listing.marketplace} rating={listing.sellerRating} reviews={listing.sellerReviews} shippingTier={listing.shippingTier} />
               )}
             </div>
           )}
