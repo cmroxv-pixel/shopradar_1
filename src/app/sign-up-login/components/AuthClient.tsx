@@ -118,17 +118,44 @@ export default function AuthClient() {
   const [reverseCanvas, setReverseCanvas] = useState(false);
   const { signIn, signUp } = useAuth();
   const router = useRouter();
+  const [attempts, setAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [lockCountdown, setLockCountdown] = useState(0);
+
+  // Countdown timer when locked out
+  useEffect(() => {
+    if (!lockedUntil) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) { setLockedUntil(null); setAttempts(0); setLockCountdown(0); clearInterval(interval); }
+      else setLockCountdown(remaining);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockedUntil && Date.now() < lockedUntil) {
+      toast.error(`Too many attempts. Try again in ${lockCountdown}s`);
+      return;
+    }
     setLoading(true);
     try {
       await signIn(email, password);
+      setAttempts(0);
       setReverseCanvas(true);
       toast.success('Welcome back!');
       setTimeout(() => router.push('/watchlist-price-alerts'), 1000);
     } catch (err: any) {
-      toast.error(err.message || 'Login failed');
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      if (newAttempts >= 5) {
+        const lockTime = Date.now() + 15 * 60 * 1000;
+        setLockedUntil(lockTime);
+        toast.error('Too many failed attempts. Locked for 15 minutes.');
+      } else {
+        toast.error(`${err.message || 'Login failed'} (${5 - newAttempts} attempts remaining)`);
+      }
     } finally {
       setLoading(false);
     }
@@ -246,7 +273,12 @@ export default function AuthClient() {
                 />
               )}
 
-              <button type="submit" disabled={loading} style={{ width: '100%', padding: '13px', borderRadius: 100, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: '-0.01em', background: loading ? 'rgba(255,255,255,0.3)' : 'white', color: 'black', marginTop: 6, transition: 'all 0.15s' }}
+              {lockedUntil && lockCountdown > 0 && (
+                <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', marginBottom: 12, fontSize: 12, color: '#ef4444', textAlign: 'center' }}>
+                  🔒 Too many attempts — locked for {Math.floor(lockCountdown / 60)}:{String(lockCountdown % 60).padStart(2, '0')}
+                </div>
+              )}
+              <button type="submit" disabled={loading || (!!lockedUntil && Date.now() < lockedUntil)} style={{ width: '100%', padding: '13px', borderRadius: 100, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: '-0.01em', background: loading ? 'rgba(255,255,255,0.3)' : 'white', color: 'black', marginTop: 6, transition: 'all 0.15s' }}
                 onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.88)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = loading ? 'rgba(255,255,255,0.3)' : 'white'; }}
               >
