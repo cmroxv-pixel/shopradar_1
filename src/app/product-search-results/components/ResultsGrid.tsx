@@ -57,9 +57,6 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
   query: string; currentPrice: number;
   priceHistory: { date: string; price: number }[]; marketplace: string;
 }) {
-  const { user } = useAuth();
-  const plan = getEffectivePlan(user);
-  const hasAI = canUseFeature(plan, 'ai_recommendations');
   const [rec, setRec] = useState<{ verdict: string; reason: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [shown, setShown] = useState(false);
@@ -81,6 +78,10 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
 
   const verdictColor = rec?.verdict === 'Buy Now' ? 'hsl(var(--success))' : rec?.verdict === 'Wait' ? 'hsl(var(--warning))' : 'hsl(var(--primary))';
 
+  const { user } = useAuth();
+  const plan = getEffectivePlan(user);
+  const hasAI = canUseFeature(plan, 'ai_recommendations');
+
   return (
     <div style={{ marginTop: 6 }}>
       <button onClick={hasAI ? getAnalysis : () => window.location.href = '/pricing'}
@@ -98,6 +99,7 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
   );
 }
 
+
 // ── Deal Score (Radar+) ────────────────────────────────────
 function DealScore({ query, price, priceHistory, marketplace, rating, reviews, shippingTier }: {
   query: string; price: number; priceHistory: any[]; marketplace: string;
@@ -105,25 +107,23 @@ function DealScore({ query, price, priceHistory, marketplace, rating, reviews, s
 }) {
   const { user } = useAuth();
   const plan = getEffectivePlan(user);
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [shown, setShown] = useState(false);
-
+  const [data, setData] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [shown, setShown] = React.useState(false);
   const hasFeature = canUseFeature(plan, 'deal_score');
 
-  const fetch_ = async () => {
+  const run = async () => {
     if (shown) { setShown(false); return; }
     if (!hasFeature) { window.location.href = '/pricing'; return; }
     setLoading(true); setShown(true);
     try {
       const res = await window.fetch('/api/deal-score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, price, priceHistory, marketplace, rating, reviews, shippingTier }),
       });
-      const d = await res.json();
-      setData(d);
-    } catch { } finally { setLoading(false); }
+      setData(await res.json());
+    } catch {}
+    setLoading(false);
   };
 
   const scoreColor = !data ? 'hsl(var(--muted-foreground))' :
@@ -133,19 +133,16 @@ function DealScore({ query, price, priceHistory, marketplace, rating, reviews, s
 
   return (
     <div style={{ marginTop: 4 }}>
-      <button onClick={fetch_} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, cursor: 'pointer', background: hasFeature ? 'hsl(var(--muted))' : 'hsl(218 100% 50% / 0.08)', border: `1px solid ${hasFeature ? 'hsl(var(--border))' : 'hsl(218 100% 50% / 0.3)'}`, color: hasFeature ? 'hsl(var(--muted-foreground))' : 'hsl(218 100% 50%)', fontFamily: 'Inter, sans-serif', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
-        {loading ? '…' : '★'} {hasFeature ? (shown && !loading ? 'Hide Score' : 'Deal Score') : 'Radar+ — Deal Score'}
+      <button onClick={run} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, cursor: 'pointer', background: hasFeature ? 'hsl(var(--muted))' : 'hsl(var(--primary) / 0.06)', border: '1px solid hsl(var(--border))', color: hasFeature ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))', fontFamily: 'Inter, sans-serif', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {loading ? '…' : '★'} {hasFeature ? (shown ? 'Hide Score' : 'Deal Score') : 'Radar+ — Deal Score'}
       </button>
       {shown && !loading && data && (
         <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, background: 'hsl(var(--muted) / 0.5)', border: '1px solid hsl(var(--border))' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
             <span style={{ fontSize: 20, fontWeight: 800, color: scoreColor }}>{data.dealScore}/10</span>
             <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor }}>{data.dealLabel}</span>
           </div>
-          <div style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))', lineHeight: 1.5 }}>
-            {data.prediction} <span style={{ opacity: 0.6 }}>({data.predictionConfidence} confidence)</span>
-            {data.savingsVsAvg !== 0 && <span style={{ color: data.savingsVsAvg > 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}> · {data.savingsVsAvg > 0 ? `${data.savingsVsAvg}% below` : `${Math.abs(data.savingsVsAvg)}% above`} avg</span>}
-          </div>
+          <div style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))' }}>{data.prediction}</div>
         </div>
       )}
     </div>
