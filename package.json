@@ -68,6 +68,7 @@
     "recharts": "^2.15.2",
     "sonner": "^1.7.1",
     "three": "^0.183.2"
+    "stripe": "^17.7.0",
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
