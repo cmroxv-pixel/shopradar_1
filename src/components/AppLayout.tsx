@@ -14,7 +14,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, dotVariant, useDither }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-background flex flex-col" style={{ position: 'relative' }}>
+    <div className="min-h-screen bg-background flex flex-col" style={{ position: 'relative', overflowX: 'hidden', width: '100%' }}>
       {useDither && <DitherBackground />}
       {dotVariant && !useDither && <DotCanvas variant={dotVariant} />}
       <Topbar />
