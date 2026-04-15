@@ -205,7 +205,7 @@ export default function SearchResultsClient() {
   const [showRecent, setShowRecent] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const searchSectionRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const supabase = createClient();
   const [userProfile, setUserProfile] = useState<any>(null);
   const plan = getEffectivePlan(user, userProfile);
