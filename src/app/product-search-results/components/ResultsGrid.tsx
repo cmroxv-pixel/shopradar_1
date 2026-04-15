@@ -1,6 +1,6 @@
 'use client';
 import { useAuth } from '@/contexts/AuthContext';
-import { getEffectivePlan, canUseFeature } from '@/lib/plan';
+import { getEffectivePlan, canUseFeature, PLAN_LIMITS } from '@/lib/plan';
 import React, { useState, useCallback, useRef } from 'react';
 import type { Listing } from './mockData';
 import AppImage from '@/components/ui/AppImage';
@@ -81,6 +81,7 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
   const { user } = useAuth();
   const plan = getEffectivePlan(user);
   const hasAI = canUseFeature(plan, 'ai_recommendations');
+  const hasDealScore = canUseFeature(plan, 'deal_score');
 
   return (
     <div style={{ marginTop: 6 }}>
@@ -93,6 +94,60 @@ function AIRecommendation({ query, currentPrice, priceHistory, marketplace }: {
         <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, background: 'hsl(var(--muted) / 0.5)', border: '1px solid hsl(var(--border))' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: verdictColor, marginBottom: 2 }}>{rec.verdict}</div>
           <div style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))', lineHeight: 1.5 }}>{rec.reason}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Deal Score (Radar+) ────────────────────────────────────
+function DealScore({ query, price, priceHistory, marketplace, rating, reviews, shippingTier }: {
+  query: string; price: number; priceHistory: any[]; marketplace: string;
+  rating: number; reviews: number; shippingTier: string;
+}) {
+  const { user } = useAuth();
+  const plan = getEffectivePlan(user);
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [shown, setShown] = useState(false);
+
+  const hasFeature = canUseFeature(plan, 'deal_score');
+
+  const fetch_ = async () => {
+    if (shown) { setShown(false); return; }
+    if (!hasFeature) { window.location.href = '/pricing'; return; }
+    setLoading(true); setShown(true);
+    try {
+      const res = await window.fetch('/api/deal-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, price, priceHistory, marketplace, rating, reviews, shippingTier }),
+      });
+      const d = await res.json();
+      setData(d);
+    } catch { } finally { setLoading(false); }
+  };
+
+  const scoreColor = !data ? 'hsl(var(--muted-foreground))' :
+    data.dealScore >= 8 ? 'hsl(var(--success))' :
+    data.dealScore >= 6 ? 'hsl(var(--primary))' :
+    data.dealScore >= 4 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      <button onClick={fetch_} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, cursor: 'pointer', background: hasFeature ? 'hsl(var(--muted))' : 'hsl(218 100% 50% / 0.08)', border: `1px solid ${hasFeature ? 'hsl(var(--border))' : 'hsl(218 100% 50% / 0.3)'}`, color: hasFeature ? 'hsl(var(--muted-foreground))' : 'hsl(218 100% 50%)', fontFamily: 'Inter, sans-serif', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {loading ? '…' : '★'} {hasFeature ? (shown && !loading ? 'Hide Score' : 'Deal Score') : 'Radar+ — Deal Score'}
+      </button>
+      {shown && !loading && data && (
+        <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, background: 'hsl(var(--muted) / 0.5)', border: '1px solid hsl(var(--border))' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: scoreColor }}>{data.dealScore}/10</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor }}>{data.dealLabel}</span>
+          </div>
+          <div style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))', lineHeight: 1.5 }}>
+            {data.prediction} <span style={{ opacity: 0.6 }}>({data.predictionConfidence} confidence)</span>
+            {data.savingsVsAvg !== 0 && <span style={{ color: data.savingsVsAvg > 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))' }}> · {data.savingsVsAvg > 0 ? `${data.savingsVsAvg}% below` : `${Math.abs(data.savingsVsAvg)}% above`} avg</span>}
+          </div>
         </div>
       )}
     </div>
@@ -427,6 +482,7 @@ function ProductCard({
               <Sparkline data={priceHistory} />
               {priceHistory.length >= 2 && (
                 <AIRecommendation query={listing.productName} currentPrice={listing.price} priceHistory={priceHistory} marketplace={listing.marketplace} />
+        <DealScore query={listing.productName} price={listing.price} priceHistory={priceHistory} marketplace={listing.marketplace} rating={listing.sellerRating} reviews={listing.sellerReviews} shippingTier={listing.shippingTier} />
               )}
             </div>
           )}
