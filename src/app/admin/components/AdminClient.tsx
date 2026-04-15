@@ -7,9 +7,9 @@ import { toast } from 'sonner';
 import { Toaster } from 'sonner';
 
 const ADMIN_ID = '2c8fdd0b-b3b6-4216-a541-1cf40490658a';
-const PH_PROJECT = '382608';
-const PH_HOST = 'https://us.posthog.com';
-const PH_KEY = 'phc_mDWJLx7qC9EjyyA4ycrDWNk9iucE4VmbjzzpLE7xReUR';
+const PH_PROJECT = process.env.NEXT_PUBLIC_POSTHOG_PROJECT || '382608';
+const PH_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.posthog.com';
+const PH_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || '';
 
 type Tab = 'overview' | 'users' | 'searches' | 'analytics' | 'revenue' | 'system';
 interface Stats { totalUsers: number; totalWatchlistItems: number; totalAlerts: number; totalSearches: number; }
