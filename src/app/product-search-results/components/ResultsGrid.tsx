@@ -125,21 +125,18 @@ function DealScore({ query, price, priceHistory, marketplace, rating, reviews, s
     setLoading(false);
   };
 
-  const scoreColor = !data ? 'hsl(var(--muted-foreground))' :
-    data.dealScore >= 8 ? 'hsl(var(--success))' :
-    data.dealScore >= 6 ? 'hsl(var(--primary))' :
-    data.dealScore >= 4 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
+  const sc = !data ? 'hsl(var(--muted-foreground))' : data.dealScore >= 8 ? 'hsl(var(--success))' : data.dealScore >= 6 ? 'hsl(var(--primary))' : data.dealScore >= 4 ? 'hsl(var(--warning))' : 'hsl(var(--destructive))';
 
   return (
     <div style={{ marginTop: 4 }}>
-      <button onClick={run} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, cursor: 'pointer', background: hasFeature ? 'hsl(var(--muted))' : 'hsl(var(--primary) / 0.06)', border: '1px solid hsl(var(--border))', color: hasFeature ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))', fontFamily: 'Inter, sans-serif', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
-        {loading ? '…' : '★'} {hasFeature ? (shown ? 'Hide Score' : 'Deal Score') : 'Radar+ — Deal Score'}
+      <button onClick={run} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, cursor: 'pointer', background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))', color: hasFeature ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))', fontFamily: 'Inter, sans-serif', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {loading ? '…' : '★'} {hasFeature ? (shown ? 'Hide Score' : 'Deal Score') : 'Radar+ Deal Score'}
       </button>
       {shown && !loading && data && (
         <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, background: 'hsl(var(--muted) / 0.5)', border: '1px solid hsl(var(--border))' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: scoreColor }}>{data.dealScore}/10</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor }}>{data.dealLabel}</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: sc }}>{data.dealScore}/10</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: sc }}>{data.dealLabel}</span>
           </div>
           <div style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))' }}>{data.prediction}</div>
         </div>
@@ -147,7 +144,6 @@ function DealScore({ query, price, priceHistory, marketplace, rating, reviews, s
     </div>
   );
 }
-
 // ── Trust badge ────────────────────────────────────────────
 function TrustBadge({ label }: { label: string }) {
   const map: Record<string, { color: string; bg: string }> = {
