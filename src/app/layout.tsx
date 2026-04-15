@@ -4,7 +4,6 @@ import '../styles/tailwind.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PostHogProvider } from '@/components/PostHogProvider';
-import DarkModeInit from '@/components/DarkModeInit';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -21,9 +20,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-mode="dark" suppressHydrationWarning>
       <head>
-        <DarkModeInit />
+        {/* Restore user preference if they switched to light */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var s=localStorage.getItem('shopradar-mode');if(s==='light')document.documentElement.removeAttribute('data-mode')}catch(e){}})()` }} />
       </head>
       <body>
         <PostHogProvider>
