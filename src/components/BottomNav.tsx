@@ -106,9 +106,9 @@ export default function BottomNav() {
 
   return (
     <nav style={{
-      position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 40, display: 'flex', alignItems: 'flex-end', gap: 8,
-      padding: '10px 16px 8px',
+      position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 40, display: 'flex', alignItems: 'flex-end', gap: 20,
+      padding: '12px 32px 10px',
       background: 'hsl(var(--background) / 0.85)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
