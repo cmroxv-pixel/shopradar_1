@@ -240,6 +240,38 @@ export default function AdminClient() {
                   ))}
                 </div>
 
+                {/* Plan tester */}
+                <div style={{ background: 'hsl(var(--card))', border: '1.5px solid hsl(var(--primary) / 0.3)', borderRadius: 16, padding: '20px 24px', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: 14, margin: 0, color: 'hsl(var(--foreground))' }}>🧪 Test Plan Features</p>
+                      <p style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', margin: '3px 0 0' }}>Switch your account plan to test what each tier looks like. Only affects your account.</p>
+                    </div>
+                    {testPlan && (
+                      <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 100, background: 'hsl(var(--success) / 0.1)', color: 'hsl(var(--success))', fontWeight: 700, border: '1px solid hsl(var(--success) / 0.3)' }}>
+                        Testing: {testPlan === 'radar_plus' ? 'Radar+' : testPlan.charAt(0).toUpperCase() + testPlan.slice(1)}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {([
+                      { id: 'free' as const, label: 'Free', desc: '5 searches/day, 3 watchlist', color: 'hsl(var(--muted-foreground))' },
+                      { id: 'pro' as const, label: 'Pro', desc: 'Unlimited + AI analysis', color: 'hsl(var(--primary))' },
+                      { id: 'radar_plus' as const, label: 'Radar+', desc: 'Everything unlocked', color: 'hsl(var(--success))' },
+                    ]).map(p => (
+                      <button key={p.id} onClick={() => applyTestPlan(p.id)} disabled={savingPlan}
+                        style={{ flex: 1, minWidth: 130, padding: '12px 16px', borderRadius: 12, border: `1.5px solid ${testPlan === p.id ? p.color : 'hsl(var(--border))'}`, background: testPlan === p.id ? `color-mix(in srgb, ${p.color} 10%, transparent)` : 'hsl(var(--muted) / 0.5)', cursor: savingPlan ? 'wait' : 'pointer', textAlign: 'left', transition: 'all 0.15s', opacity: savingPlan ? 0.6 : 1 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: p.color, margin: 0 }}>{p.label}</p>
+                        <p style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', margin: '2px 0 0' }}>{p.desc}</p>
+                      </button>
+                    ))}
+                    <button onClick={() => applyTestPlan('radar_plus')} disabled={savingPlan}
+                      style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid hsl(var(--border))', background: 'transparent', cursor: savingPlan ? 'wait' : 'pointer', fontSize: 12, color: 'hsl(var(--muted-foreground))', whiteSpace: 'nowrap' }}>
+                      ↺ Reset to Radar+
+                    </button>
+                  </div>
+                </div>
+
                 {/* Recent users */}
                 <div style={{ background: 'hsl(var(--card))', border: '1.5px solid hsl(var(--border))', borderRadius: 16, overflow: 'hidden' }}>
                   <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
