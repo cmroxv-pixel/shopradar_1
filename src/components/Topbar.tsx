@@ -5,6 +5,7 @@ import Image from 'next/image';
 import ModeToggle from './ModeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getEffectivePlan, PLAN_LABELS } from '@/lib/plan';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 const ADMIN_ID = '2c8fdd0b-b3b6-4216-a541-1cf40490658a';
 
@@ -33,11 +34,43 @@ const IconSignOut = () => (
   </svg>
 );
 
+// Magnifying dock item for topbar links
+function DockLink({ href, children, mouseX }: { href: string; children: React.ReactNode; mouseX: any }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const distance = useTransform(mouseX, (val: number) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+    return val - bounds.x - bounds.width / 2;
+  });
+
+  const scaleSync = useTransform(distance, [-100, 0, 100], [1, 1.25, 1]);
+  const scale = useSpring(scaleSync, { mass: 0.1, stiffness: 200, damping: 16 });
+  const ySync = useTransform(distance, [-100, 0, 100], [0, -3, 0]);
+  const y = useSpring(ySync, { mass: 0.1, stiffness: 200, damping: 16 });
+
+  return (
+    <motion.div ref={ref} style={{ scale, y, display: 'inline-block' }}>
+      <Link href={href} style={{
+        fontSize: 13, fontWeight: 600,
+        color: 'hsl(var(--muted-foreground))',
+        fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+        textDecoration: 'none', transition: 'color 0.15s',
+        display: 'block',
+      }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--foreground))'}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))'}
+      >
+        {children}
+      </Link>
+    </motion.div>
+  );
+}
+
 function NavLink({ href, icon, label, onClick, color }: { href: string; icon: React.ReactNode; label: React.ReactNode; onClick: () => void; color?: string }) {
   return (
     <Link href={href} onClick={onClick}
       style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', color: color || 'hsl(var(--foreground))', textDecoration: 'none', fontSize: 13, transition: 'background 0.1s' }}
-      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = color ? `hsl(var(--primary) / 0.06)` : 'hsl(var(--muted))'}
+      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = color ? 'hsl(var(--primary) / 0.06)' : 'hsl(var(--muted))'}
       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}
     >
       <span style={{ color: color || 'hsl(var(--muted-foreground))' }}>{icon}</span>
@@ -71,10 +104,11 @@ function UserAvatar() {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      {/* Avatar button */}
-      <button
+      <motion.button
         onClick={() => setOpen(o => !o)}
         title={email}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
         style={{
           width: 34, height: 34, borderRadius: '50%',
           background: 'hsl(var(--primary))',
@@ -83,20 +117,15 @@ function UserAvatar() {
           fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
           fontWeight: 700, fontSize: 14,
           boxShadow: '0 2px 10px hsl(var(--primary) / 0.35)',
-          transition: 'transform 0.15s, box-shadow 0.15s',
           flexShrink: 0, position: 'relative',
         }}
-        onMouseEnter={e => { const el = e.currentTarget as HTMLButtonElement; el.style.transform = 'scale(1.08)'; el.style.boxShadow = '0 4px 16px hsl(var(--primary) / 0.45)'; }}
-        onMouseLeave={e => { const el = e.currentTarget as HTMLButtonElement; el.style.transform = 'scale(1)'; el.style.boxShadow = '0 2px 10px hsl(var(--primary) / 0.35)'; }}
       >
         {initial}
-        {/* Admin green dot */}
         {isAdmin && (
           <span style={{ position: 'absolute', bottom: 0, right: 0, width: 9, height: 9, borderRadius: '50%', background: 'hsl(var(--success))', border: '1.5px solid hsl(var(--background))', boxShadow: '0 0 6px hsl(var(--success))' }} />
         )}
-      </button>
+      </motion.button>
 
-      {/* Dropdown */}
       {open && (
         <div style={{
           position: 'absolute', top: 'calc(100% + 10px)', right: 0,
@@ -106,55 +135,37 @@ function UserAvatar() {
           minWidth: 210, zIndex: 100,
           animation: 'heroFadeUp 0.2s ease both',
         }}>
-          {/* User info header */}
           <div style={{ padding: '14px 16px', borderBottom: '1px solid hsl(var(--border))' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
                 {initial}
               </div>
               <div style={{ overflow: 'hidden', flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   {user.user_metadata?.full_name && (
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--foreground))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user.user_metadata.full_name}
                     </p>
                   )}
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {isAdmin && (
-                      <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700, flexShrink: 0 }}>ADMIN</span>
-                    )}
-                    <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: planColor, color: 'white', fontWeight: 700, flexShrink: 0, opacity: plan === 'free' ? 0.5 : 1 }}>{planLabel}</span>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {isAdmin && <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700 }}>ADMIN</span>}
+                    <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: planColor, color: 'white', fontWeight: 700, opacity: plan === 'free' ? 0.5 : 1 }}>{planLabel}</span>
                   </div>
                 </div>
-                <p style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {email}
-                </p>
+                <p style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</p>
               </div>
             </div>
           </div>
 
-          {/* Nav links */}
           <div style={{ padding: '6px 0' }}>
             <NavLink href="/watchlist-price-alerts" icon={<IconHeart />} label="Watchlist" onClick={() => setOpen(false)} />
             <NavLink href="/settings" icon={<IconGear />} label="Settings" onClick={() => setOpen(false)} />
-
-            {/* Admin only */}
             {isAdmin && (
-              <NavLink
-                href="/admin"
-                icon={<IconAdmin />}
-                label={
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                    Admin Panel
-                    <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700 }}>ONLY YOU</span>
-                  </span>
-                }
-                onClick={() => setOpen(false)}
-                color="hsl(var(--primary))"
+              <NavLink href="/admin" icon={<IconAdmin />}
+                label={<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>Admin Panel <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700 }}>ONLY YOU</span></span>}
+                onClick={() => setOpen(false)} color="hsl(var(--primary))"
               />
             )}
-
-            {/* Sign out */}
             <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: 4, paddingTop: 4 }}>
               <button
                 onClick={async () => { setOpen(false); await signOut(); }}
@@ -162,8 +173,7 @@ function UserAvatar() {
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--destructive) / 0.06)'}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}
               >
-                <IconSignOut />
-                Sign out
+                <IconSignOut /> Sign out
               </button>
             </div>
           </div>
@@ -175,6 +185,7 @@ function UserAvatar() {
 
 export default function Topbar() {
   const { user, loading } = useAuth();
+  const mouseX = useMotionValue(Infinity);
 
   return (
     <header className="topbar sticky top-0 z-40 w-full">
@@ -182,30 +193,42 @@ export default function Topbar() {
         maxWidth: 1400, margin: '0 auto',
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
+      }}
+        onMouseMove={e => mouseX.set(e.pageX)}
+        onMouseLeave={() => mouseX.set(Infinity)}
+      >
+        {/* Logo */}
         <Link href="/product-search-results" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <Image src="/logo.webp" alt="ShopRadar" width={32} height={32} style={{ borderRadius: 8 }} />
+          <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
+            <Image src="/logo.webp" alt="ShopRadar" width={32} height={32} style={{ borderRadius: 8 }} />
+          </motion.div>
           <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', color: 'hsl(var(--foreground))' }}>
             ShopRadar
           </span>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/pricing" style={{ textDecoration: 'none', fontSize: 13, fontWeight: 600, color: 'hsl(var(--muted-foreground))', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", transition: 'color 0.15s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'hsl(var(--foreground))'}
-            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'hsl(var(--muted-foreground))'}
-          >
-            Pricing
-          </Link>
+        {/* Center nav links with dock magnification */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          <DockLink href="/pricing" mouseX={mouseX}>Pricing</DockLink>
+          <DockLink href="/product-search-results" mouseX={mouseX}>Search</DockLink>
+        </div>
+
+        {/* Right */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <ModeToggle />
           {!loading && (
             user
               ? <UserAvatar />
               : (
                 <Link href="/sign-up-login" style={{ textDecoration: 'none' }}>
-                  <button className="btn-primary" style={{ fontSize: 13, padding: '8px 18px' }}>
+                  <motion.button
+                    whileHover={{ scale: 1.04, y: -1 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="btn-primary"
+                    style={{ fontSize: 13, padding: '8px 18px' }}
+                  >
                     Sign in
-                  </button>
+                  </motion.button>
                 </Link>
               )
           )}
