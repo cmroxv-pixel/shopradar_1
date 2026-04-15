@@ -106,15 +106,14 @@ export default function BottomNav() {
 
   return (
     <nav style={{
-      position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 40, display: 'flex', alignItems: 'flex-end', gap: 20,
-      padding: '12px 32px 10px',
-      background: 'hsl(var(--background) / 0.85)',
+      position: 'fixed', bottom: 0, left: 0, right: 0,
+      zIndex: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 20,
+      padding: '12px 32px 18px',
+      background: 'hsl(var(--background) / 0.92)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
-      border: '1.5px solid hsl(var(--border))',
-      borderRadius: 22,
-      boxShadow: '0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+      borderTop: '1px solid hsl(var(--border))',
+      boxShadow: '0 -4px 24px rgba(0,0,0,0.08)',
     }}
       onMouseMove={e => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
