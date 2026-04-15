@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
-import { Bookmark, Bell, RefreshCw, Trash2, Plus, Loader2, LogIn, Wifi } from 'lucide-react';
 import WatchlistTab from './WatchlistTab';
 import AlertsTab from './AlertsTab';
 import { type WatchlistItem, type PriceAlert } from './watchlistData';
@@ -24,7 +23,7 @@ function dbToWatchlistItem(row: any): WatchlistItem {
     marketplaceCount: row.marketplace_count,
     bestMarketplace: row.best_marketplace || '',
     stockStatus: row.stock_status as WatchlistItem['stockStatus'],
-    addedAt: new Date(row.added_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    addedAt: new Date(row.added_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }),
     lastChecked: 'just now',
     hasAlert: row.has_alert,
     priceHistory: Array.isArray(row.price_history) ? row.price_history : [],
@@ -45,11 +44,71 @@ function dbToPriceAlert(row: any): PriceAlert {
     marketplace: row.marketplace || 'Any marketplace',
     status: row.alert_status as PriceAlert['status'],
     emailEnabled: row.email_enabled,
-    createdAt: new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    createdAt: new Date(row.created_at).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }),
     lastTriggered: row.last_triggered ? new Date(row.last_triggered).toLocaleString() : undefined,
     priceHistory: Array.isArray(row.price_history) ? row.price_history : [],
     priceDrop: Number(row.price_drop),
   };
+}
+
+// ── Skeleton loader ──────────────────────────────────────────
+function Skeleton({ width = '100%', height = 16, radius = 8, style = {} }: { width?: string | number; height?: number; radius?: number; style?: React.CSSProperties }) {
+  return (
+    <div style={{
+      width, height, borderRadius: radius,
+      background: 'hsl(var(--muted))',
+      animation: 'shimmer 1.5s ease-in-out infinite',
+      ...style,
+    }} />
+  );
+}
+
+function WatchlistSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <style>{`
+        @keyframes shimmer {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
+      `}</style>
+      {/* Header skeleton */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Skeleton width={220} height={28} radius={6} />
+          <Skeleton width={160} height={14} radius={6} />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Skeleton width={100} height={36} radius={10} />
+          <Skeleton width={120} height={36} radius={10} />
+        </div>
+      </div>
+      {/* Stat cards skeleton */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 4 }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 14, padding: '16px' }}>
+            <Skeleton width={40} height={14} radius={4} style={{ marginBottom: 8 }} />
+            <Skeleton width={60} height={24} radius={4} style={{ marginBottom: 6 }} />
+            <Skeleton width={100} height={12} radius={4} />
+          </div>
+        ))}
+      </div>
+      {/* Tab skeleton */}
+      <Skeleton width={220} height={40} radius={12} />
+      {/* Card skeletons */}
+      {[...Array(3)].map((_, i) => (
+        <div key={i} style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 16, padding: '20px', display: 'flex', gap: 16, alignItems: 'center' }}>
+          <Skeleton width={64} height={64} radius={12} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Skeleton width="60%" height={16} radius={4} />
+            <Skeleton width="40%" height={12} radius={4} />
+            <Skeleton width="30%" height={20} radius={4} />
+          </div>
+          <Skeleton width={80} height={32} radius={8} />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function WatchlistClient() {
@@ -82,89 +141,35 @@ export default function WatchlistClient() {
     }
   }, [user]);
 
-  // Real-time subscriptions
   useEffect(() => {
     if (!user) return;
-
-    // Clean up any existing channel first
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-
-    const channel = supabase
-      .channel(`watchlist-realtime-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'watchlist_items',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setWatchlist(prev => [dbToWatchlistItem(payload.new), ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setWatchlist(prev =>
-              prev.map(item => item.id === payload.new.id ? dbToWatchlistItem(payload.new) : item)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setWatchlist(prev => prev.filter(item => item.id !== payload.old.id));
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'price_alerts',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setAlerts(prev => [dbToPriceAlert(payload.new), ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setAlerts(prev =>
-              prev.map(alert => alert.id === payload.new.id ? dbToPriceAlert(payload.new) : alert)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setAlerts(prev => prev.filter(alert => alert.id !== payload.old.id));
-          }
-        }
-      )
+    if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null; }
+    const channel = supabase.channel(`watchlist-realtime-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'watchlist_items', filter: `user_id=eq.${user.id}` }, (payload) => {
+        if (payload.eventType === 'INSERT') setWatchlist(prev => [dbToWatchlistItem(payload.new), ...prev]);
+        else if (payload.eventType === 'UPDATE') setWatchlist(prev => prev.map(item => item.id === payload.new.id ? dbToWatchlistItem(payload.new) : item));
+        else if (payload.eventType === 'DELETE') setWatchlist(prev => prev.filter(item => item.id !== payload.old.id));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'price_alerts', filter: `user_id=eq.${user.id}` }, (payload) => {
+        if (payload.eventType === 'INSERT') setAlerts(prev => [dbToPriceAlert(payload.new), ...prev]);
+        else if (payload.eventType === 'UPDATE') setAlerts(prev => prev.map(a => a.id === payload.new.id ? dbToPriceAlert(payload.new) : a));
+        else if (payload.eventType === 'DELETE') setAlerts(prev => prev.filter(a => a.id !== payload.old.id));
+      })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          setRealtimeConnected(true);
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          setRealtimeConnected(false);
-        }
+        setRealtimeConnected(status === 'SUBSCRIBED');
       });
-
     channelRef.current = channel;
-
-    return () => {
-      supabase.removeChannel(channel);
-      channelRef.current = null;
-      setRealtimeConnected(false);
-    };
+    return () => { supabase.removeChannel(channel); channelRef.current = null; setRealtimeConnected(false); };
   }, [user]);
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    } else if (!authLoading) {
-      setDataLoading(false);
-    }
+    if (user) fetchData();
+    else if (!authLoading) setDataLoading(false);
   }, [user, authLoading, fetchData]);
 
   const handleRefreshAll = () => {
     setRefreshing(true);
-    fetchData().then(() => {
-      setRefreshing(false);
-      toast.success('Watchlist refreshed!');
-    });
+    fetchData().then(() => { setRefreshing(false); toast.success('Watchlist refreshed!'); });
   };
 
   const handleRemoveWatchlist = async (id: string) => {
@@ -180,7 +185,7 @@ export default function WatchlistClient() {
     const { error } = await supabase.from('watchlist_items').delete().in('id', selectedWl).eq('user_id', user.id);
     if (error) { toast.error('Failed to remove items'); return; }
     setWatchlist(prev => prev.filter(w => !selectedWl.includes(w.id)));
-    toast.success(`${selectedWl.length} items removed from watchlist`);
+    toast.success(`${selectedWl.length} items removed`);
     setSelectedWl([]);
   };
 
@@ -189,7 +194,7 @@ export default function WatchlistClient() {
     const { error } = await supabase.from('price_alerts').delete().eq('id', id).eq('user_id', user.id);
     if (error) { toast.error('Failed to delete alert'); return; }
     setAlerts(prev => prev.filter(a => a.id !== id));
-    toast.success('Price alert deleted');
+    toast.success('Alert deleted');
   };
 
   const handleToggleAlertEmail = async (id: string) => {
@@ -200,7 +205,7 @@ export default function WatchlistClient() {
     const { error } = await supabase.from('price_alerts').update({ email_enabled: newVal }).eq('id', id).eq('user_id', user.id);
     if (error) { toast.error('Failed to update alert'); return; }
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, emailEnabled: newVal } : a));
-    toast.success(`Email notifications ${newVal ? 'enabled' : 'disabled'}`);
+    toast.success(`Email ${newVal ? 'enabled' : 'disabled'}`);
   };
 
   const handleUpdateAlertTarget = async (id: string, targetPrice: number) => {
@@ -217,163 +222,110 @@ export default function WatchlistClient() {
     if (!alert) return;
     const next = alert.status === 'Paused' ? 'Active' : 'Paused';
     const { error } = await supabase.from('price_alerts').update({ alert_status: next }).eq('id', id).eq('user_id', user.id);
-    if (error) { toast.error('Failed to update alert status'); return; }
+    if (error) { toast.error('Failed to update alert'); return; }
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: next } : a));
     toast.success(`Alert ${next === 'Paused' ? 'paused' : 'resumed'}`);
   };
 
   const activeAlertCount = alerts.filter(a => a.status === 'Active').length;
   const triggeredCount = alerts.filter(a => a.status === 'Triggered').length;
+  const ff = (n: number) => n.toLocaleString();
 
-  // Not logged in state
+  // Not signed in
   if (!authLoading && !user) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <Bookmark size={28} className="text-primary" />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', textAlign: 'center', gap: 16, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: 'hsl(var(--primary) / 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 21C12 21 3 14.5 3 8.5C3 5.42 5.42 3 8.5 3C10.24 3 11.91 3.81 13 5.08C14.09 3.81 15.76 3 17.5 3C20.58 3 23 5.42 23 8.5C23 14.5 14 21 12 21Z" stroke="hsl(var(--primary))" strokeWidth="1.8" strokeLinejoin="round"/></svg>
         </div>
-        <h2 className="text-xl font-semibold text-foreground">Sign in to view your watchlist</h2>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          Create an account or sign in to save products and set price alerts that persist across sessions.
-        </p>
-        <Link
-          href="/sign-up-login"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150"
-        >
-          <LogIn size={15} /> Sign in / Create account
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'hsl(var(--foreground))', margin: 0 }}>Sign in to view your watchlist</h2>
+        <p style={{ fontSize: 14, color: 'hsl(var(--muted-foreground))', maxWidth: 300, margin: 0, lineHeight: 1.6 }}>Save products and set price alerts that persist across sessions.</p>
+        <Link href="/sign-up-login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
+          Sign in
         </Link>
       </div>
     );
   }
 
-  // Loading state
-  if (authLoading || dataLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 size={28} className="animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Loading — show skeleton
+  if (authLoading || dataLoading) return <WatchlistSkeleton />;
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
       <Toaster position="bottom-right" richColors />
 
-      {/* Page header */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-foreground">Watchlist & Price Alerts</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(var(--foreground))', margin: 0, letterSpacing: '-0.02em' }}>Watchlist</h1>
             {realtimeConnected && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
-                <Wifi size={10} className="animate-pulse" /> Live
+              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 100, background: 'hsl(var(--success) / 0.1)', color: 'hsl(var(--success))', border: '1px solid hsl(var(--success) / 0.2)', fontWeight: 600 }}>
+                ● Live
               </span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {watchlist.length} saved products · {activeAlertCount} active alerts
-            {triggeredCount > 0 && (
-              <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-success/10 text-success">
-                🎉 {triggeredCount} alert{triggeredCount > 1 ? 's' : ''} triggered!
-              </span>
-            )}
+          <p style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', marginTop: 4, marginBottom: 0 }}>
+            {watchlist.length} saved · {activeAlertCount} active alerts
+            {triggeredCount > 0 && <span style={{ marginLeft: 8, color: 'hsl(var(--success))', fontWeight: 600 }}>· {triggeredCount} triggered!</span>}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefreshAll}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-border bg-card text-foreground hover:bg-muted disabled:opacity-50 transition-all duration-150 active:scale-95"
-          >
-            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-            {refreshing ? 'Refreshing...' : 'Refresh all'}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={handleRefreshAll} disabled={refreshing}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 100, border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--card))', color: 'hsl(var(--foreground))', cursor: refreshing ? 'wait' : 'pointer', fontSize: 13, fontWeight: 500, opacity: refreshing ? 0.6 : 1 }}>
+            {refreshing ? 'Refreshing…' : '↻ Refresh'}
           </button>
-          <Link
-            href="/product-search-results"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:opacity-90 active:scale-95 transition-all duration-150"
-          >
-            <Plus size={14} /> Add products
+          <Link href="/product-search-results"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+            + Add products
           </Link>
         </div>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {[
-          { label: 'Tracked Products', value: watchlist.length, icon: Bookmark, color: 'text-primary bg-primary/10' },
-          { label: 'Active Alerts', value: activeAlertCount, icon: Bell, color: 'text-accent bg-accent/10' },
-          { label: 'Alerts Triggered', value: triggeredCount, icon: Bell, color: 'text-success bg-success/10' },
-          { label: 'Avg. Savings Found', value: '24%', icon: RefreshCw, color: 'text-primary bg-primary/10' },
-        ].map(stat => (
-          <div key={`stat-${stat.label}`} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.color}`}>
-              <stat.icon size={16} />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-foreground tabular-nums">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-            </div>
+          { label: 'Tracked Products', value: ff(watchlist.length) },
+          { label: 'Active Alerts', value: ff(activeAlertCount) },
+          { label: 'Triggered', value: ff(triggeredCount) },
+          { label: 'Avg. Savings', value: '24%' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: 'hsl(var(--card))', border: '1.5px solid hsl(var(--border))', borderRadius: 14, padding: '16px 18px' }}>
+            <p style={{ fontSize: 24, fontWeight: 800, color: 'hsl(var(--foreground))', margin: 0, letterSpacing: '-0.03em' }}>{s.value}</p>
+            <p style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginTop: 4, marginBottom: 0 }}>{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-muted rounded-xl p-1 w-full sm:w-72">
+      <div style={{ display: 'flex', background: 'hsl(var(--muted))', borderRadius: 12, padding: 4, width: 'fit-content', border: '1px solid hsl(var(--border))' }}>
         {(['watchlist', 'alerts'] as Tab[]).map(t => (
-          <button
-            key={`maintab-${t}`}
-            onClick={() => setActiveTab(t)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${activeTab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            {t === 'watchlist' ? <Bookmark size={14} /> : <Bell size={14} />}
+          <button key={t} onClick={() => setActiveTab(t)}
+            style={{ padding: '7px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: activeTab === t ? 700 : 400, background: activeTab === t ? 'hsl(var(--card))' : 'transparent', color: activeTab === t ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', transition: 'all 0.15s', boxShadow: activeTab === t ? '0 1px 6px rgba(0,0,0,0.08)' : 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
             {t === 'watchlist' ? 'Watchlist' : 'Price Alerts'}
             {t === 'alerts' && triggeredCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-success text-white text-xs flex items-center justify-center font-bold">
-                {triggeredCount}
-              </span>
+              <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'hsl(var(--success))', color: 'white', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{triggeredCount}</span>
             )}
           </button>
         ))}
       </div>
 
-      {/* Bulk action bar */}
+      {/* Bulk action */}
       {selectedWl.length > 0 && activeTab === 'watchlist' && (
-        <div className="flex items-center justify-between bg-primary/10 border border-primary/30 rounded-xl px-4 py-3">
-          <span className="text-sm font-medium text-primary">{selectedWl.length} item{selectedWl.length > 1 ? 's' : ''} selected</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSelectedWl([])}
-              className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Deselect all
-            </button>
-            <button
-              onClick={handleBulkDelete}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-destructive text-white hover:opacity-90 active:scale-95 transition-all duration-150"
-            >
-              <Trash2 size={12} /> Remove selected
-            </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--primary) / 0.08)', border: '1px solid hsl(var(--primary) / 0.2)', borderRadius: 12, padding: '12px 18px' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--primary))' }}>{selectedWl.length} selected</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setSelectedWl([])} style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer' }}>Deselect all</button>
+            <button onClick={handleBulkDelete} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, background: 'hsl(var(--destructive))', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Remove selected</button>
           </div>
         </div>
       )}
 
       {/* Tab content */}
-      {activeTab === 'watchlist' ? (
-        <WatchlistTab
-          items={watchlist}
-          selected={selectedWl}
-          onSelect={setSelectedWl}
-          onRemove={handleRemoveWatchlist}
-        />
-      ) : (
-        <AlertsTab
-          alerts={alerts}
-          onDelete={handleDeleteAlert}
-          onToggleEmail={handleToggleAlertEmail}
-          onUpdateTarget={handleUpdateAlertTarget}
-          onToggleStatus={handleToggleAlertStatus}
-        />
-      )}
+      {activeTab === 'watchlist'
+        ? <WatchlistTab items={watchlist} selected={selectedWl} onSelect={setSelectedWl} onRemove={handleRemoveWatchlist} />
+        : <AlertsTab alerts={alerts} onDelete={handleDeleteAlert} onToggleEmail={handleToggleAlertEmail} onUpdateTarget={handleUpdateAlertTarget} onToggleStatus={handleToggleAlertStatus} />
+      }
     </div>
   );
 }
