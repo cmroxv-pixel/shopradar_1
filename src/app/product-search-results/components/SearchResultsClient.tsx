@@ -474,7 +474,8 @@ export default function SearchResultsClient() {
 
         {/* Search bar */}
         <div style={{ marginBottom: 8, position: 'relative' }}>
-          <div className="search-glow" style={{ padding: '6px 6px 6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <BorderGlow borderRadius={100} backgroundColor="hsl(var(--card))" glowColor="218 100 60" colors={['#3b82f6', '#6366f1', '#0ea5e9']} edgeSensitivity={20} glowRadius={32} glowIntensity={1.2} coneSpread={30} animated>
+          <div style={{ padding: '6px 6px 6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
               <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M11 11L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
