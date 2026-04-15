@@ -183,7 +183,13 @@ export default function Topbar() {
           </span>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/pricing" style={{ textDecoration: 'none', fontSize: 13, fontWeight: 600, color: 'hsl(var(--muted-foreground))', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", transition: 'color 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'hsl(var(--foreground))'}
+            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'hsl(var(--muted-foreground))'}
+          >
+            Pricing
+          </Link>
           <ModeToggle />
           {!loading && (
             user
