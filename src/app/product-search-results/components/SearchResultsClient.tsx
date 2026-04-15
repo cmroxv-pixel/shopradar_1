@@ -208,6 +208,8 @@ export default function SearchResultsClient() {
   const [savedSearches, setSavedSearches] = useState<string[]>([]);
   const [multiCountry, setMultiCountry] = useState(false);
   const [exportingCSV, setExportingCSV] = useState(false);
+  const [photoSearching, setPhotoSearching] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const { user, loading: authLoading } = useAuth();
   const supabase = createClient();
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -322,6 +324,35 @@ export default function SearchResultsClient() {
     });
     setSavedSearches(prev => [...new Set([...prev, query.name.toLowerCase()])]);
     toast.success('Search saved — we\'ll track this for you');
+  };
+
+  const handlePhotoSearch = async (file: File) => {
+    if (!canUseFeature(plan, 'barcode_scanner')) { window.location.href = '/pricing'; return; }
+    setPhotoSearching(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        const mimeType = file.type;
+        const res = await fetch('/api/photo-search', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64, mimeType }),
+        });
+        const data = await res.json();
+        if (data.query) {
+          setSearchText(data.query);
+          toast.success(`Found: ${data.description || data.query}`);
+          setTimeout(() => handleSearch(data.query), 300);
+        } else {
+          toast.error('Could not identify product in image');
+        }
+        setPhotoSearching(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      toast.error('Photo search failed');
+      setPhotoSearching(false);
+    }
   };
 
   const toggleCompare = useCallback((listing: Listing) => {
@@ -591,6 +622,34 @@ export default function SearchResultsClient() {
             {searchText && !isSearching && (
               <button onClick={() => { setSearchText(''); searchRef.current?.focus(); }} style={{ color: 'hsl(var(--muted-foreground))', background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px', opacity: 0.5 }}>
                 <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 1l11 11M12 1L1 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
+            )}
+            {/* Hidden file input for photo search */}
+            <input ref={photoInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoSearch(f); e.target.value = ''; }} />
+            {canUseFeature(plan, 'barcode_scanner') ? (
+              <button onClick={() => photoInputRef.current?.click()} disabled={photoSearching || isSearching}
+                title="Search by photo (Radar+)"
+                style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid hsl(var(--border))', background: photoSearching ? 'hsl(var(--primary) / 0.1)' : 'transparent', color: photoSearching ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                {photoSearching ? (
+                  <svg width="14" height="14" viewBox="0 0 14 14" style={{ animation: 'spin 0.75s linear infinite' }}><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="20" strokeDashoffset="10" fill="none"/></svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                    <rect x="1" y="3" width="13" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+                    <circle cx="7.5" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M5 3l1-2h3l1 2" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            ) : (
+              <button onClick={() => window.location.href = '/pricing'}
+                title="Photo search — Radar+ only"
+                style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid hsl(var(--primary) / 0.3)', background: 'hsl(var(--primary) / 0.06)', color: 'hsl(var(--primary))', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <rect x="1" y="3" width="13" height="10" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+                  <circle cx="7.5" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M5 3l1-2h3l1 2" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                </svg>
               </button>
             )}
             <button onClick={() => handleSearch()} disabled={!address.country || isSearching || !searchText.trim()} className="btn-primary" style={{ fontSize: 14, padding: '10px 24px' }}>
