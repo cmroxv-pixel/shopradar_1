@@ -170,15 +170,7 @@ export default function AuthClient() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link href="/product-search-results" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'hsl(218 100% 50%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="4.5" cy="8" r="3" fill="white" opacity="0.95"/>
-                <circle cx="11.5" cy="4.5" r="2.2" fill="white" opacity="0.8"/>
-                <circle cx="11.5" cy="11.5" r="2.2" fill="white" opacity="0.8"/>
-                <line x1="7.4" y1="7" x2="9.4" y2="5.3" stroke="white" strokeWidth="1.1" opacity="0.6"/>
-                <line x1="7.4" y1="9" x2="9.4" y2="10.7" stroke="white" strokeWidth="1.1" opacity="0.6"/>
-              </svg>
-            </div>
+            <img src="/logo.png" alt="ShopRadar" style={{ width: 36, height: 36, display: "block" }} />
             <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 18, color: 'white', letterSpacing: '-0.02em' }}>ShopRadar</span>
           </Link>
         </div>
