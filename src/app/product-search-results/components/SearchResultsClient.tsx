@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getEffectivePlan, canUseFeature, PLAN_LIMITS } from '@/lib/plan';
@@ -318,6 +319,66 @@ export default function SearchResultsClient() {
   const lowestPrice = inStock.length > 0 ? Math.min(...inStock.map(l => l.price)) : null;
   const fastestDays = inStock.length > 0 ? Math.min(...inStock.map(l => l.deliveryDays)) : null;
   const activeFilterCount = [selectedMarketplaces.length > 0, deliveryFilter !== 'any', minRating > 0].filter(Boolean).length;
+
+  // Show skeleton while auth loads
+  if (authLoading) {
+    return (
+      <div style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+        <style>{`@keyframes shimmer{0%,100%{opacity:0.4}50%{opacity:0.8}}`}</style>
+        {/* Hero skeleton */}
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+          <div style={{ width: 180, height: 24, borderRadius: 100, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+          <div style={{ width: '70%', height: 56, borderRadius: 12, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+          <div style={{ width: '50%', height: 56, borderRadius: 12, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+          <div style={{ width: 320, height: 18, borderRadius: 8, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+          <div style={{ width: 160, height: 48, borderRadius: 100, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite', marginTop: 8 }} />
+        </div>
+        {/* Stats skeleton */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, padding: '20px 24px' }}>
+          {[1,2,3].map(i => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 60, height: 32, borderRadius: 8, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+              <div style={{ width: 80, height: 14, borderRadius: 6, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+            </div>
+          ))}
+        </div>
+        {/* Search area skeleton */}
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 24px' }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 100, height: 36, borderRadius: 100, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+            <div style={{ width: 90, height: 36, borderRadius: 100, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            {[1,2,3,4,5,6].map(i => <div key={i} style={{ width: 90, height: 34, borderRadius: 100, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />)}
+          </div>
+          <div style={{ height: 56, borderRadius: 100, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite', marginBottom: 16 }} />
+          <div style={{ height: 56, borderRadius: 16, background: 'hsl(var(--muted))', animation: 'shimmer 1.5s ease-in-out infinite' }} />
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to sign in if not logged in
+  if (!user) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 20, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", padding: '40px 24px', textAlign: 'center' }}>
+        <img src="/logo.png" alt="ShopRadar" style={{ width: 56, height: 56 }} />
+        <h2 style={{ fontSize: 28, fontWeight: 800, color: 'hsl(var(--foreground))', margin: 0, letterSpacing: '-0.02em' }}>Sign in to search</h2>
+        <p style={{ fontSize: 15, color: 'hsl(var(--muted-foreground))', margin: 0, maxWidth: 340, lineHeight: 1.6 }}>
+          Create a free account to compare prices across 40+ marketplaces and track price drops.
+        </p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Link href="/sign-up-login" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none', fontWeight: 700, fontSize: 15 }}>
+            Sign in
+          </Link>
+          <Link href="/sign-up-login" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 100, border: '1.5px solid hsl(var(--border))', color: 'hsl(var(--foreground))', textDecoration: 'none', fontWeight: 600, fontSize: 15 }}>
+            Create account
+          </Link>
+        </div>
+        <p style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', margin: 0 }}>Free forever · No credit card required</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', zIndex: 1 }}>
