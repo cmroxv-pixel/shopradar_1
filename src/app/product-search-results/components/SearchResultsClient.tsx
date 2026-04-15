@@ -1,10 +1,11 @@
 'use client';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { getEffectivePlan, canUseFeature, PLAN_LIMITS } from '@/lib/plan';
+import { createClient } from '@/lib/supabase/client';
 import { useScroll, useTransform, useSpring, motion } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
 import AddressSelector from './AddressSelector';
-import BorderGlow from '@/components/BorderGlow';
-import '@/components/BorderGlow.css';
 import FilterPanel from './FilterPanel';
 import ResultsGrid from './ResultsGrid';
 import ComparisonDrawer from './ComparisonDrawer';
@@ -201,6 +202,18 @@ export default function SearchResultsClient() {
   const [showRecent, setShowRecent] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const searchSectionRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const supabase = createClient();
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const plan = getEffectivePlan(user, userProfile);
+  const searchLimit = PLAN_LIMITS[plan].searches_per_day;
+
+  // Load user profile for plan check
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('user_profiles').select('subscription_plan, subscription_status').eq('id', user.id).single()
+      .then(({ data }) => { if (data) setUserProfile(data); });
+  }, [user]);
 
   useEffect(() => {
     try { setRecentSearches(JSON.parse(localStorage.getItem('shopradar_recent') || '[]')); } catch { }
@@ -236,6 +249,18 @@ export default function SearchResultsClient() {
     const name = (overrideName || searchText).trim();
     if (!name) return;
     if (!address.country) { toast.error('Please select your location first'); return; }
+
+    // Plan enforcement — check daily search limit for free users
+    if (!canUseFeature(plan, 'unlimited_searches')) {
+      const today = new Date().toDateString();
+      const stored = JSON.parse(localStorage.getItem('shopradar_daily') || '{}');
+      const count = stored.date === today ? stored.count : 0;
+      if (count >= searchLimit) {
+        toast.error(`Free plan limit: ${searchLimit} searches per day. Upgrade to Pro for unlimited searches.`, { duration: 5000 });
+        return;
+      }
+      localStorage.setItem('shopradar_daily', JSON.stringify({ date: today, count: count + 1 }));
+    }
     if (overrideName) setSearchText(overrideName);
     setQuery({ name });
     setHasSearched(false);
@@ -447,18 +472,7 @@ export default function SearchResultsClient() {
 
         {/* Search bar */}
         <div style={{ marginBottom: 8, position: 'relative' }}>
-          <BorderGlow
-            borderRadius={100}
-            backgroundColor="hsl(var(--card))"
-            glowColor="218 100 60"
-            colors={['#3b82f6', '#6366f1', '#0ea5e9']}
-            edgeSensitivity={20}
-            glowRadius={32}
-            glowIntensity={1.2}
-            coneSpread={30}
-            animated
-          >
-          <div style={{ padding: '6px 6px 6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="search-glow" style={{ padding: '6px 6px 6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: 'hsl(var(--muted-foreground))', flexShrink: 0 }}>
               <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M11 11L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -481,7 +495,6 @@ export default function SearchResultsClient() {
               {isSearching ? 'Searching…' : 'Search'}
             </button>
           </div>
-          </BorderGlow>
 
           {/* Recent searches */}
           {showRecent && recentSearches.length > 0 && (
@@ -552,7 +565,19 @@ export default function SearchResultsClient() {
               </div>
               {/* Results */}
               <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-                <ResultsGrid listings={sorted} loading={isSearching} hasSearched={hasSearched} compareItems={compareItems} onToggleCompare={toggleCompare} onAddToWatchlist={(l) => toast.success(`"${l.productName}" added to watchlist`)} displayCurrency={displayCurrency} exchangeRate={exchangeRate} selectedCategory={selectedCategory} onBarcodeSearch={(q) => { setResultsOpen(false); handleSearch(q); }} />
+                <ResultsGrid listings={sorted} loading={isSearching} hasSearched={hasSearched} compareItems={compareItems} onToggleCompare={toggleCompare} onAddToWatchlist={async (l) => {
+                  if (!user) { toast.error('Sign in to add to watchlist'); return; }
+                  const limit = PLAN_LIMITS[plan].watchlist_items;
+                  if (limit !== Infinity) {
+                    const { count } = await supabase.from('watchlist_items').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+                    if ((count || 0) >= limit) {
+                      toast.error(`Watchlist limit: ${limit} items on ${plan === 'free' ? 'Free' : 'Pro'} plan. Upgrade for more.`, { duration: 5000 });
+                      return;
+                    }
+                  }
+                  await supabase.from('watchlist_items').insert({ user_id: user.id, product_name: l.productName, marketplace: l.marketplace, price: l.price, currency: l.currency, listing_url: l.listingUrl });
+                  toast.success(`"${l.productName}" added to watchlist`);
+                }} displayCurrency={displayCurrency} exchangeRate={exchangeRate} selectedCategory={selectedCategory} onBarcodeSearch={(q) => { setResultsOpen(false); handleSearch(q); }} />
               </div>
             </div>
           </div>
