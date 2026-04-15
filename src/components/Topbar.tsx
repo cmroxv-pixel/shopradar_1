@@ -199,7 +199,7 @@ export default function Topbar() {
         {/* Logo */}
         <Link href="/product-search-results" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
-            <Image src="/logo.png" alt="ShopRadar" width={32} height={32} style={{ borderRadius: 0 }} />
+            <img src="/logo.png" alt="ShopRadar" style={{ width: 32, height: 32, display: "block" }} />
           </motion.div>
           <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', color: 'hsl(var(--foreground))' }}>
             ShopRadar
