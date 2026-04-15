@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 const ADMIN_ID = '2c8fdd0b-b3b6-4216-a541-1cf40490658a';
 const PH_KEY = 'phc_mDWJLx7qC9EjyyA4ycrDWNk9iucE4VmbjzzpLE7xReUR';
@@ -45,6 +46,8 @@ export default function AdminClient() {
   const [phEvents, setPhEvents] = useState<PHEvent[]>([]);
   const [aiStats, setAiStats] = useState<{ verdict: string; count: number }[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [testPlan, setTestPlan] = useState<'free' | 'pro' | 'radar_plus' | null>(null);
+  const [savingPlan, setSavingPlan] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || user.id !== ADMIN_ID)) {
@@ -148,6 +151,22 @@ export default function AdminClient() {
   }, [user, supabase, fetchPostHogEvents]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const applyTestPlan = async (plan: 'free' | 'pro' | 'radar_plus') => {
+    setSavingPlan(true);
+    try {
+      await supabase.from('user_profiles').update({
+        subscription_plan: plan,
+        subscription_status: plan === 'free' ? 'inactive' : 'active',
+      }).eq('id', ADMIN_ID);
+      setTestPlan(plan);
+      toast.success(`Plan set to ${plan === 'radar_plus' ? 'Radar+' : plan.charAt(0).toUpperCase() + plan.slice(1)} — refresh the app to see changes`);
+    } catch {
+      toast.error('Failed to update plan');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
 
   if (loading || !user || user.id !== ADMIN_ID) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: 24, height: 24, border: '2px solid hsl(var(--primary))', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.75s linear infinite' }} /></div>;
