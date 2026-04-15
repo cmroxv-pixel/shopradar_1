@@ -18,7 +18,7 @@ export default function AppLayout({ children, dotVariant, useDither }: AppLayout
       {useDither && <DitherBackground />}
       {dotVariant && !useDither && <DotCanvas variant={dotVariant} />}
       <Topbar />
-      <main className="flex-1 w-full pb-20" style={{ position: 'relative', zIndex: 1 }}>
+      <main className="flex-1 w-full pb-20" style={{ paddingTop: 56 }} style={{ position: 'relative', zIndex: 1 }}>
         {children}
       </main>
       <BottomNav />
