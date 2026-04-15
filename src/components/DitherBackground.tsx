@@ -5,7 +5,15 @@ const Dither = dynamic(() => import('./Dither'), { ssr: false });
 
 export default function DitherBackground() {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, opacity: 0.18, pointerEvents: 'none' }}>
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 0,
+      opacity: 0.22,
+      pointerEvents: 'none',
+      width: '100vw',
+      height: '100vh',
+    }}>
       <Dither
         waveColor={[0.1, 0.4, 1.0]}
         waveSpeed={0.04}
