@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import ModeToggle from './ModeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getEffectivePlan, PLAN_LABELS } from '@/lib/plan';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
@@ -215,7 +214,6 @@ export default function Topbar() {
 
         {/* Right */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <ModeToggle />
           {!loading && (
             user
               ? <UserAvatar />
