@@ -68,7 +68,9 @@
     "recharts": "^2.15.2",
     "sonner": "^1.7.1",
     "stripe": "^17.7.0",
-    "three": "^0.183.2"
+    "three": "^0.183.2",
+    "postprocessing": "^6.36.3",
+    "@react-three/postprocessing": "^2.16.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
