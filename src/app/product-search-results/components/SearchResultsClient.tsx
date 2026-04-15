@@ -205,6 +205,9 @@ export default function SearchResultsClient() {
   const [showRecent, setShowRecent] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const searchSectionRef = useRef<HTMLDivElement>(null);
+  const [savedSearches, setSavedSearches] = useState<string[]>([]);
+  const [multiCountry, setMultiCountry] = useState(false);
+  const [exportingCSV, setExportingCSV] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const supabase = createClient();
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -221,6 +224,15 @@ export default function SearchResultsClient() {
   useEffect(() => {
     try { setRecentSearches(JSON.parse(localStorage.getItem('shopradar_recent') || '[]')); } catch { }
   }, []);
+
+  // Load saved searches for Radar+ users
+  useEffect(() => {
+    if (user && plan === 'radar_plus') {
+      fetch(`/api/saved-searches?userId=${user.id}`)
+        .then(r => r.json()).then(d => setSavedSearches((d.searches || []).map((s: any) => s.query)))
+        .catch(() => {});
+    }
+  }, [user, plan]);
 
   useEffect(() => {
     if (address.country) {
@@ -285,6 +297,32 @@ export default function SearchResultsClient() {
       setIsSearching(false);
     }
   }, [searchText, address.country, fetchResults, saveRecentSearch]);
+
+  const handleCSVExport = async () => {
+    if (!canUseFeature(plan, 'csv_export')) { window.location.href = '/pricing'; return; }
+    setExportingCSV(true);
+    try {
+      const res = await fetch('/api/csv-export', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listings: sorted, query: query.name }),
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url;
+      a.download = `shopradar-${query.name.replace(/\s+/g, '-')}.csv`;
+      a.click(); URL.revokeObjectURL(url);
+    } catch { toast.error('Export failed'); } finally { setExportingCSV(false); }
+  };
+
+  const handleSaveSearch = async () => {
+    if (!user || !query.name) return;
+    await fetch('/api/saved-searches', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, query: query.name, country: address.country }),
+    });
+    setSavedSearches(prev => [...new Set([...prev, query.name.toLowerCase()])]);
+    toast.success('Search saved — we\'ll track this for you');
+  };
 
   const toggleCompare = useCallback((listing: Listing) => {
     setCompareItems(prev => {
@@ -591,6 +629,29 @@ export default function SearchResultsClient() {
         </p>
 
         <StatusBar active={isSearching} query={query.name} />
+        {hasSearched && listings.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, padding: '8px 0', flexWrap: 'wrap' }}>
+            {canUseFeature(plan, 'csv_export') ? (
+              <button onClick={handleCSVExport} disabled={exportingCSV} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 100, border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--card))', color: 'hsl(var(--foreground))', cursor: 'pointer', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
+                {exportingCSV ? '…' : '↓'} Export CSV
+              </button>
+            ) : (
+              <button onClick={() => window.location.href = '/pricing'} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 100, border: '1.5px solid hsl(var(--primary) / 0.3)', background: 'hsl(var(--primary) / 0.06)', color: 'hsl(var(--primary))', cursor: 'pointer', fontWeight: 500 }}>
+                Pro — Export CSV
+              </button>
+            )}
+            {user && canUseFeature(plan, 'saved_searches') && !savedSearches.includes(query.name.toLowerCase()) && (
+              <button onClick={handleSaveSearch} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 100, border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--card))', color: 'hsl(var(--foreground))', cursor: 'pointer', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
+                ♥ Save Search
+              </button>
+            )}
+            {user && savedSearches.includes(query.name.toLowerCase()) && (
+              <span style={{ fontSize: 12, padding: '6px 14px', borderRadius: 100, background: 'hsl(var(--success) / 0.1)', color: 'hsl(var(--success))', border: '1px solid hsl(var(--success) / 0.2)', fontWeight: 500 }}>
+                ✓ Search saved
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Results modal */}
         {resultsOpen && hasSearched && (
