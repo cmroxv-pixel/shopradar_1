@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import SettingsClient from './components/SettingsClient';
@@ -7,12 +8,12 @@ const FaultyTerminal = dynamic(() => import('@/components/ui/FaultyTerminal'), {
 
 export default function SettingsPage() {
   return (
-    <AppLayout isLoggedIn dotVariant="settings">
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+    <div className="min-h-screen flex flex-col" style={{ position: 'relative' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', background: '#0a0a0a' }}>
         <FaultyTerminal
           scale={1.5}
           tint="#3b82f6"
-          brightness={0.4}
+          brightness={0.5}
           scanlineIntensity={0.3}
           noiseAmp={1}
           mouseReact={false}
@@ -21,8 +22,10 @@ export default function SettingsPage() {
         />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <SettingsClient />
+        <AppLayout isLoggedIn>
+          <SettingsClient />
+        </AppLayout>
       </div>
-    </AppLayout>
+    </div>
   );
 }
