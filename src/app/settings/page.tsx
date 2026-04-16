@@ -11,7 +11,7 @@ export default function SettingsPage() {
           duration={20}
           colorCycleDuration={4}
           dotSize={2}
-          spacing={18}
+          spacing={8}
         />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
