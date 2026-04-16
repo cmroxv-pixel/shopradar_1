@@ -35,7 +35,7 @@ const PLANS = [
     highlight: false,
     cta: 'Start Pro',
     features: [
-      { text: 'Unlimited searches', included: true },
+      { text: '100 searches per day', included: true },
       { text: '25 watchlist items', included: true },
       { text: '90-day price history', included: true },
       { text: 'All 40+ marketplaces', included: true },
