@@ -9,9 +9,9 @@ export default function SettingsPage() {
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
         <GradientDots
           duration={20}
-          colorCycleDuration={6}
-          dotSize={4}
-          spacing={16}
+          colorCycleDuration={4}
+          dotSize={2}
+          spacing={18}
         />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
