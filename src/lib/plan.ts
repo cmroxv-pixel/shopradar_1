@@ -16,7 +16,7 @@ export function canUseFeature(plan: Plan, feature: keyof typeof PLAN_FEATURES): 
 }
 
 export const PLAN_FEATURES = {
-  unlimited_searches:    { free: false, pro: true,  radar_plus: true  },
+  unlimited_searches:    { free: false, pro: false, radar_plus: true  },
   ai_recommendations:    { free: false, pro: true,  radar_plus: true  },
   email_alerts:          { free: false, pro: true,  radar_plus: true  },
   screenshot_preview:    { free: false, pro: true,  radar_plus: true  },
@@ -35,7 +35,7 @@ export const PLAN_FEATURES = {
 
 export const PLAN_LIMITS = {
   free:       { searches_per_day: 5,       watchlist_items: 3,        history_days: 30,  results: 10 },
-  pro:        { searches_per_day: Infinity, watchlist_items: 25,       history_days: 90,  results: 25 },
+  pro:        { searches_per_day: 100,      watchlist_items: 25,       history_days: 90,  results: 25 },
   radar_plus: { searches_per_day: Infinity, watchlist_items: Infinity, history_days: 365, results: 50 },
 } as const;
 
