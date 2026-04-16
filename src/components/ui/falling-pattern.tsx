@@ -1,6 +1,6 @@
 'use client';
 
-import type React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 
 function cn(...classes: (string | undefined | false | null)[]): string {
@@ -88,4 +88,39 @@ export function FallingPattern({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{
+        transition={{ duration: 0.2 }}
+        className="size-full"
+      >
+        <motion.div
+          className="relative size-full z-0"
+          style={{
+            backgroundColor,
+            backgroundImage: generateBackgroundImage(),
+            backgroundSize: backgroundSizes,
+          }}
+          variants={{
+            initial: { backgroundPosition: startPositions },
+            animate: {
+              backgroundPosition: [startPositions, endPositions],
+              transition: {
+                duration: duration,
+                ease: 'linear',
+                repeat: Number.POSITIVE_INFINITY,
+              },
+            },
+          }}
+          initial="initial"
+          animate="animate"
+        />
+      </motion.div>
+      <div
+        className="absolute inset-0 z-10"
+        style={{
+          backdropFilter: `blur(${blurIntensity})`,
+          backgroundImage: `radial-gradient(circle at 50% 50%, transparent 0, transparent 2px, hsl(var(--background)) 2px)`,
+          backgroundSize: `${8 * density}px ${8 * density}px`,
+        }}
+      />
+    </div>
+  );
+}
