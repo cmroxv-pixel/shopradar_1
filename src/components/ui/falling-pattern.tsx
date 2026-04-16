@@ -2,7 +2,9 @@
 
 import type React from 'react';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+function cn(...classes: (string | undefined | false | null)[]): string {
+  return classes.filter(Boolean).join(' ');
+}
 
 type FallingPatternProps = React.ComponentProps<'div'> & {
   color?: string;
