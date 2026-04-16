@@ -40,9 +40,7 @@ function MockTopbar() {
   return (
     <div style={{ padding: '8px 12px', background: '#0a0a0a', borderBottom: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white', opacity: 0.8 }} />
-        </div>
+        <AppLogo size={18} />
         <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>ShopRadar</span>
       </div>
       <div style={{ display: 'flex', gap: 4 }}>
