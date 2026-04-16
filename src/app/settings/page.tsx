@@ -6,7 +6,7 @@ import { GradientDots } from '@/components/ui/gradient-dots';
 export default function SettingsPage() {
   return (
     <AppLayout isLoggedIn dotVariant="settings">
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.15 }}>
         <GradientDots
           duration={20}
           colorCycleDuration={4}
