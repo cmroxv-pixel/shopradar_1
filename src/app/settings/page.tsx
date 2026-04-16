@@ -7,7 +7,12 @@ export default function SettingsPage() {
   return (
     <AppLayout isLoggedIn dotVariant="settings">
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        <GradientDots duration={20} colorCycleDuration={6} />
+        <GradientDots
+          duration={20}
+          colorCycleDuration={6}
+          dotSize={4}
+          spacing={16}
+        />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
         <SettingsClient />
