@@ -59,7 +59,7 @@ function AppMockup({ step }: { step: number }) {
         <div style={{ padding: '10px 12px' }}>
           <div style={{ background: '#1d4ed820', border: '1.5px solid #1d4ed8', borderRadius: 8, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="4" r="2" stroke="#1d4ed8" strokeWidth="1.2"/><path d="M5 9C5 9 2 6.5 2 4a3 3 0 0 1 6 0c0 2.5-3 5-3 5z" stroke="#1d4ed8" strokeWidth="1.2"/></svg>
-            <span style={{ fontSize: 9, color: '#1d4ed8', fontWeight: 600 }}>Australia, NSW, Sydney</span>
+            <span style={{ fontSize: 9, color: '#1d4ed8', fontWeight: 600 }}>United States, New York, Brooklyn</span>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             {PRODUCTS.slice(0, 2).map((p, i) => (
