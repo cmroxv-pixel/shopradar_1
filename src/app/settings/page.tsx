@@ -8,12 +8,12 @@ export default function SettingsPage() {
     <AppLayout isLoggedIn dotVariant="settings">
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
         <FallingPattern
-          color="hsl(218 100% 62% / 0.25)"
+          color="hsl(218 100% 62% / 0.6)"
           backgroundColor="transparent"
           duration={150}
-          blurIntensity="0.5em"
+          blurIntensity="1em"
           density={1}
-          className="[mask-image:radial-gradient(ellipse_at_top,transparent_10%,black_70%)]"
+          className="h-screen [mask-image:radial-gradient(ellipse_at_center,transparent,hsl(var(--background)))]"
         />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
