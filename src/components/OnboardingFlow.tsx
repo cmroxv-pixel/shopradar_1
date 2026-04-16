@@ -154,7 +154,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <AppLogo size={28} />
+            <img src="/assets/images/Untitled-1775641794744.png" alt="ShopRadar" style={{ width: 28, height: 28, filter: 'brightness(0) invert(1)', objectFit: 'contain' }} />
             <span className="font-bold text-sm text-foreground">Welcome to ShopRadar</span>
           </div>
           <button onClick={onComplete} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-150">
