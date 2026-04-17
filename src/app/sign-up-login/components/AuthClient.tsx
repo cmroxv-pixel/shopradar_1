@@ -154,7 +154,7 @@ export default function AuthClient() {
         setLockedUntil(lockTime);
         toast.error('Too many failed attempts. Locked for 15 minutes.');
       } else {
-        toast.error(`${err.message || 'Login failed'} (${5 - newAttempts} attempts remaining)`);
+        toast.error(`${err.message || 'Login failed'} (${50 - newAttempts} attempts remaining)`);
       }
     } finally {
       setLoading(false);
