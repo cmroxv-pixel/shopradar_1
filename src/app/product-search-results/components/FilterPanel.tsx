@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { X, Star } from 'lucide-react';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 
 const MARKETPLACES = ['Amazon', 'eBay', 'Best Buy', 'Walmart', 'B&H Photo', 'Newegg', 'Costco', 'Rakuten', 'Adorama', 'Currys', 'JB Hi-Fi'];
 
@@ -69,13 +70,18 @@ export default function FilterPanel({
         </div>
         <div className="flex gap-1 flex-wrap mt-2">
           {([100, 200, 300, 500] as const).map(v => (
-            <button
+            <LiquidButton
               key={`price-chip-${v}`}
+              size="xs"
               onClick={() => onPriceRange([0, v])}
-              className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-150 ${priceRange[1] === v ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+              style={{
+                color: priceRange[1] === v ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+                fontWeight: priceRange[1] === v ? 600 : 400,
+                border: priceRange[1] === v ? '1.5px solid hsl(var(--primary) / 0.4)' : 'transparent',
+              }}
             >
               Under ${v}
-            </button>
+            </LiquidButton>
           ))}
         </div>
       </div>
