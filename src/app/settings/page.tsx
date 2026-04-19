@@ -7,9 +7,13 @@ import FaultyBackground from './components/FaultyBackground';
 
 export default function SettingsPage() {
   return (
-    <div style={{ minHeight: '100vh', position: 'relative', background: '#0a0a0a' }}>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        <FaultyBackground style={{ width: '100%', height: '100%' }} />
+    <div style={{ minHeight: '100vh', position: 'relative', background: '#0d0d0d' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.35 }}>
+        <FaultyBackground
+          tint="#3d8eff"
+          brightness={0.8}
+          style={{ width: '100%', height: '100%' }}
+        />
       </div>
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Topbar />
