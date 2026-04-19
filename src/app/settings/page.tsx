@@ -8,7 +8,7 @@ import FaultyBackground from './components/FaultyBackground';
 export default function SettingsPage() {
   return (
     <div style={{ minHeight: '100vh', position: 'relative', background: '#0d0d0d' }}>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.35 }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.18 }}>
         <FaultyBackground
           tint="#3d8eff"
           brightness={0.8}
