@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 
 const PLANS = [
   {
@@ -178,25 +179,36 @@ export default function PricingPage() {
                 )}
                 <p style={{ fontSize: 13, color: plan.highlight ? 'rgba(255,255,255,0.6)' : 'hsl(var(--muted-foreground))', marginBottom: 22, lineHeight: 1.5 }}>{plan.description}</p>
 
-                <button
+                <LiquidButton
+                  size="lg"
                   onClick={() => handleCheckout(plan.id)}
                   disabled={loading === plan.id}
                   style={{
-                    width: '100%', padding: '12px', borderRadius: 100,
-                    fontSize: 14, fontWeight: 700, cursor: loading === plan.id ? 'wait' : 'pointer',
-                    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-                    transition: 'all 0.15s', border: 'none',
+                    width: '100%',
+                    fontSize: 14, fontWeight: 700,
                     opacity: loading === plan.id ? 0.7 : 1,
                     ...(plan.highlight
-                      ? { background: 'white', color: 'hsl(var(--primary))' }
+                      ? {
+                          color: 'hsl(var(--primary))',
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)',
+                          border: '1px solid rgba(255,255,255,0.9)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,1), 0 4px 16px rgba(0,0,0,0.2)',
+                        }
                       : plan.id === 'pro'
-                      ? { background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))', border: '1.5px solid hsl(var(--primary) / 0.3)' }
-                      : { background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))' }
+                      ? {
+                          color: 'hsl(var(--primary))',
+                          background: 'linear-gradient(135deg, rgba(61,142,255,0.28) 0%, rgba(61,142,255,0.10) 100%)',
+                          border: '1px solid rgba(61,142,255,0.4)',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 0 16px rgba(61,142,255,0.12)',
+                        }
+                      : {
+                          color: 'hsl(var(--foreground))',
+                        }
                     ),
                   }}
                 >
                   {loading === plan.id ? 'Loading…' : plan.cta}
-                </button>
+                </LiquidButton>
               </div>
 
               <div style={{ borderTop: `1px solid ${plan.highlight ? 'rgba(255,255,255,0.12)' : 'hsl(var(--border))'}`, padding: '20px 28px 28px' }}>
