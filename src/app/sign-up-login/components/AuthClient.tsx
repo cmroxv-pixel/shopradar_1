@@ -205,10 +205,9 @@ export default function AuthClient() {
         {!reverseCanvas && <DotCanvas reverse={false} />}
         {reverseCanvas && <DotCanvas reverse={true} />}
         {/* Radial fade from center */}
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, rgba(0,0,0,0.85) 0%, transparent 70%)' }} />
         {/* Top + bottom fades */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '30%', background: 'linear-gradient(to bottom, black, transparent)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '20%', background: 'linear-gradient(to top, black, transparent)' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '25%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '15%', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }} />
       </div>
 
       {/* Card */}
