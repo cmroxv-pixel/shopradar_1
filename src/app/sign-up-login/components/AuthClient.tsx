@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import Link from 'next/link';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 
 // ── Dot canvas shader ──────────────────────────────────────
 type Uniforms = Record<string, { value: number[] | number[][] | number; type: string }>;
@@ -214,9 +215,24 @@ export default function AuthClient() {
             {/* Tab switcher */}
             <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 100, padding: 3, marginBottom: 24, border: '1px solid rgba(255,255,255,0.08)' }}>
               {(['login', 'signup'] as const).map(t => (
-                <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '8px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", transition: 'all 0.2s', background: tab === t ? 'white' : 'transparent', color: tab === t ? 'black' : 'rgba(255,255,255,0.5)' }}>
+                <LiquidButton
+                  key={t}
+                  size="sm"
+                  onClick={() => setTab(t)}
+                  style={{
+                    flex: 1,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: tab === t ? 'white' : 'rgba(255,255,255,0.45)',
+                    background: tab === t
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.10) 100%)'
+                      : 'transparent',
+                    border: tab === t ? '1px solid rgba(255,255,255,0.30)' : '1px solid transparent',
+                    boxShadow: tab === t ? 'inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 8px rgba(0,0,0,0.2)' : 'none',
+                  }}
+                >
                   {t === 'login' ? 'Sign in' : 'Sign up'}
-                </button>
+                </LiquidButton>
               ))}
             </div>
 
@@ -269,12 +285,24 @@ export default function AuthClient() {
                   🔒 Too many attempts — locked for {Math.floor(lockCountdown / 60)}:{String(lockCountdown % 60).padStart(2, '0')}
                 </div>
               )}
-              <button type="submit" disabled={loading || (!!lockedUntil && Date.now() < lockedUntil)} style={{ width: '100%', padding: '13px', borderRadius: 100, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: '-0.01em', background: loading ? 'rgba(255,255,255,0.3)' : 'white', color: 'black', marginTop: 6, transition: 'all 0.15s' }}
-                onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.88)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = loading ? 'rgba(255,255,255,0.3)' : 'white'; }}
+              <LiquidButton
+                type="submit"
+                size="lg"
+                disabled={loading || (!!lockedUntil && Date.now() < lockedUntil)}
+                style={{
+                  width: '100%',
+                  marginTop: 6,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: '-0.01em',
+                  color: 'white',
+                  background: 'linear-gradient(135deg, rgba(61,142,255,0.55) 0%, rgba(61,142,255,0.25) 100%)',
+                  border: '1px solid rgba(61,142,255,0.5)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), 0 0 20px rgba(61,142,255,0.2)',
+                }}
               >
                 {loading ? 'Please wait…' : tab === 'login' ? 'Sign in →' : 'Create account →'}
-              </button>
+              </LiquidButton>
             </form>
 
             {tab === 'login' && (
