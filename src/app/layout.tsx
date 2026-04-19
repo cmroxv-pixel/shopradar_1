@@ -18,10 +18,13 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'ShopRadar' },
 };
 
+import { LiquidGlassProvider } from '@/components/ui/LiquidButton';
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-mode="dark" suppressHydrationWarning>
       <body>
+        <LiquidGlassProvider />
         <PostHogProvider>
           <AuthProvider>
             <ThemeProvider>
