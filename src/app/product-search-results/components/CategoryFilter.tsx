@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 
 const CATEGORIES = [
   {
@@ -51,39 +52,27 @@ interface CategoryFilterProps {
 
 export default function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-      {CATEGORIES.map(cat => (
-        <button
-          key={cat.id}
-          onClick={() => onSelect(cat.id)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '6px 13px', borderRadius: 100,
-            fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: selected === cat.id ? 600 : 400,
-            whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-            border: '1.5px solid',
-            borderColor: selected === cat.id ? 'hsl(var(--primary))' : 'hsl(var(--border))',
-            background: selected === cat.id ? 'hsl(var(--primary))' : 'hsl(var(--card))',
-            color: selected === cat.id ? 'white' : 'hsl(var(--muted-foreground))',
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => {
-            if (cat.id !== selected) {
-              (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--primary) / 0.4)';
-              (e.currentTarget as HTMLElement).style.color = 'hsl(var(--foreground))';
-            }
-          }}
-          onMouseLeave={e => {
-            if (cat.id !== selected) {
-              (e.currentTarget as HTMLElement).style.borderColor = 'hsl(var(--border))';
-              (e.currentTarget as HTMLElement).style.color = 'hsl(var(--muted-foreground))';
-            }
-          }}
-        >
-          {cat.icon}
-          {cat.label}
-        </button>
-      ))}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+      {CATEGORIES.map(cat => {
+        const isActive = selected === cat.id;
+        return (
+          <LiquidButton
+            key={cat.id}
+            size="sm"
+            onClick={() => onSelect(cat.id)}
+            style={{
+              color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+              fontWeight: isActive ? 600 : 400,
+              fontSize: 12,
+              flexShrink: 0,
+              border: `1.5px solid ${isActive ? 'hsl(var(--primary) / 0.5)' : 'transparent'}`,
+            }}
+          >
+            {cat.icon}
+            {cat.label}
+          </LiquidButton>
+        );
+      })}
     </div>
   );
 }
