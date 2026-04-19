@@ -42,7 +42,7 @@ function rateLimit(key: string, limit: number, windowMs: number): { allowed: boo
 // Rate limit configs per route type
 const LIMITS: Record<string, { limit: number; windowMs: number }> = {
   // Auth routes — strictest: 5 attempts per 15 minutes
-  auth: { limit: 5, windowMs: 15 * 60 * 1000 },
+  auth: { limit: 100, windowMs: 15 * 60 * 1000 },
   // AI routes — expensive: 20 per 15 minutes
   ai: { limit: 20, windowMs: 15 * 60 * 1000 },
   // Search routes — 30 per 15 minutes

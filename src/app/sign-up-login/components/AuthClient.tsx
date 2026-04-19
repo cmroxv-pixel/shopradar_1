@@ -142,20 +142,11 @@ export default function AuthClient() {
     setLoading(true);
     try {
       await signIn(email, password);
-      setAttempts(0);
       setReverseCanvas(true);
       toast.success('Welcome back!');
       setTimeout(() => router.push('/watchlist-price-alerts'), 1000);
     } catch (err: any) {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      if (newAttempts >= 5) {
-        const lockTime = Date.now() + 15 * 60 * 1000;
-        setLockedUntil(lockTime);
-        toast.error('Too many failed attempts. Locked for 15 minutes.');
-      } else {
-        toast.error(`${err.message || 'Login failed'} (${5 - newAttempts} attempts remaining)`);
-      }
+      toast.error(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
