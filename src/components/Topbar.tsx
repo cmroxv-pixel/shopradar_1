@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -218,16 +219,13 @@ export default function Topbar() {
             user
               ? <UserAvatar />
               : (
-                <Link href="/sign-up-login" style={{ textDecoration: 'none' }}>
-                  <motion.button
-                    whileHover={{ scale: 1.04, y: -1 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="btn-primary"
-                    style={{ fontSize: 13, padding: '8px 18px' }}
-                  >
-                    Sign in
-                  </motion.button>
-                </Link>
+                <LiquidButton
+                  size="sm"
+                  onClick={() => window.location.href = '/sign-up-login'}
+                  style={{ color: 'hsl(var(--primary))', fontWeight: 600, fontSize: 13 }}
+                >
+                  Sign in
+                </LiquidButton>
               )
           )}
         </div>
