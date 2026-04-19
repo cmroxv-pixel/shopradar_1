@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Loader2, X, Clock, Trash2 } from 'lucide-react';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 
 const HISTORY_KEY = 'shopradar_search_history';
 const MAX_HISTORY = 10;
@@ -160,17 +161,18 @@ export default function SearchBar({ initialQuery, onSearch, loading, disabled = 
 
         {/* Submit */}
         <div className="flex items-end">
-          <button
+          <LiquidButton
             type="submit"
             disabled={loading || !query.name.trim() || disabled}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3 bg-primary text-white rounded-xl text-sm font-semibold hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 min-w-[130px] shadow-sm shadow-primary/20"
+            size="lg"
+            style={{ color: 'hsl(var(--primary))', fontWeight: 600, minWidth: 130 }}
           >
             {loading ? (
               <><Loader2 size={15} className="animate-spin" /> Scanning...</>
             ) : (
               <><Search size={15} /> Search</>
             )}
-          </button>
+          </LiquidButton>
         </div>
       </div>
 
