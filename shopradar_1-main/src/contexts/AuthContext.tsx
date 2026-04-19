@@ -1,104 +1,99 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 const AuthContext = createContext<any>({});
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+  const fetchSession = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/session');
+      const data = await res.json();
+      setUser(data.user || null);
+    } catch {
+      setUser(null);
+    } finally {
       setLoading(false);
-    });
-
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
-  const signUp = async (email: string, password: string, metadata: any = {}) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: metadata?.fullName || '',
-          avatar_url: metadata?.avatarUrl || ''
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback`
-      }
+  useEffect(() => {
+    fetchSession();
+  }, [fetchSession]);
+
+  const signIn = async (email: string, password: string) => {
+    const res = await fetch('/api/auth/signin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
-    if (error) throw error;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Sign in failed');
+    setUser(data.user);
     return data;
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
+  const signUp = async (email: string, password: string, metadata: any = {}) => {
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, full_name: metadata?.fullName || '' }),
     });
-    if (error) throw error;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Sign up failed');
+    setUser(data.user);
     return data;
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    await fetch('/api/auth/signout', { method: 'POST' });
+    setUser(null);
   };
 
   const getCurrentUser = async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
+    await fetchSession();
     return user;
   };
 
-  const isEmailVerified = () => {
-    return user?.email_confirmed_at !== null;
-  };
+  const isEmailVerified = () => true; // No email verification needed
 
   const getUserProfile = async () => {
     if (!user) return null;
-    const { data, error } = await supabase
+    const supabase = createClient();
+    const { data } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('id', user.id)
       .single();
-    if (error) throw error;
     return data;
   };
 
-  const value = {
-    user,
-    session,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-    getCurrentUser,
-    isEmailVerified,
-    getUserProfile
-  };
+  // Make user.id compatible with Supabase queries throughout the app
+  const session = user ? { user } : null;
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      getCurrentUser,
+      isEmailVerified,
+      getUserProfile,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
