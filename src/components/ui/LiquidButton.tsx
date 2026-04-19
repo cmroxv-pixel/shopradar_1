@@ -1,34 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
-
-export const liquidButtonVariants = cva(
-  "inline-flex items-center transition-colors justify-center cursor-pointer gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-  {
-    variants: {
-      variant: {
-        default: "bg-transparent hover:scale-105 duration-300 transition text-primary",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-      },
-      size: {
-        xs:  "h-7 px-3 text-xs gap-1",
-        sm:  "h-8 px-4 text-xs gap-1.5",
-        default: "h-9 px-5 py-2",
-        lg:  "h-10 px-6",
-        xl:  "h-12 px-8",
-        xxl: "h-14 px-10",
-        icon: "size-9",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
 
 function GlassFilter() {
   return (
@@ -46,39 +19,51 @@ function GlassFilter() {
   );
 }
 
-export interface LiquidButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof liquidButtonVariants> {
-  asChild?: boolean
+const sizeClasses: Record<string, string> = {
+  xs:      "h-7 px-3 text-xs gap-1",
+  sm:      "h-8 px-4 text-xs gap-1.5",
+  default: "h-9 px-5 gap-2",
+  lg:      "h-10 px-6 gap-2",
+  xl:      "h-12 px-8 gap-2",
+  xxl:     "h-14 px-10 gap-2",
+  icon:    "size-9",
+};
+
+export interface LiquidButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  size?: keyof typeof sizeClasses;
 }
 
 export const LiquidButton = React.forwardRef<HTMLButtonElement, LiquidButtonProps>(
-  ({ className, variant, size, asChild = false, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+  ({ className, size = "default", children, ...props }, ref) => {
     return (
-      <Comp
+      <button
         ref={ref}
-        data-slot="button"
-        className={cn("relative", liquidButtonVariants({ variant, size, className }))}
+        className={cn(
+          "relative inline-flex items-center justify-center cursor-pointer whitespace-nowrap rounded-full text-sm font-medium transition-all duration-200",
+          "hover:scale-105 active:scale-95",
+          "disabled:pointer-events-none disabled:opacity-50",
+          "outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+          sizeClasses[size] ?? sizeClasses.default,
+          className
+        )}
         {...props}
       >
-        {/* Glass bubble shell */}
-        <div className="absolute top-0 left-0 z-0 h-full w-full rounded-full
+        {/* Liquid glass bubble shell */}
+        <div className="absolute inset-0 rounded-full transition-all
           shadow-[0_0_6px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.08),inset_3px_3px_0.5px_-3px_rgba(0,0,0,0.9),inset_-3px_-3px_0.5px_-3px_rgba(0,0,0,0.85),inset_1px_1px_1px_-0.5px_rgba(0,0,0,0.6),inset_-1px_-1px_1px_-0.5px_rgba(0,0,0,0.6),inset_0_0_6px_6px_rgba(0,0,0,0.12),inset_0_0_2px_2px_rgba(0,0,0,0.06),0_0_12px_rgba(255,255,255,0.15)]
-          transition-all
           dark:shadow-[0_0_8px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.08),inset_3px_3px_0.5px_-3.5px_rgba(255,255,255,0.09),inset_-3px_-3px_0.5px_-3.5px_rgba(255,255,255,0.85),inset_1px_1px_1px_-0.5px_rgba(255,255,255,0.6),inset_-1px_-1px_1px_-0.5px_rgba(255,255,255,0.6),inset_0_0_6px_6px_rgba(255,255,255,0.12),inset_0_0_2px_2px_rgba(255,255,255,0.06),0_0_12px_rgba(0,0,0,0.15)]"
         />
         {/* Frosted backdrop distortion */}
         <div
-          className="absolute top-0 left-0 isolate -z-10 h-full w-full overflow-hidden rounded-full"
+          className="absolute inset-0 -z-10 overflow-hidden rounded-full"
           style={{ backdropFilter: 'url("#liquid-glass")' }}
         />
         {/* Content */}
-        <span className="pointer-events-none relative z-10 flex items-center gap-[inherit]">
+        <span className="relative z-10 flex items-center gap-[inherit] pointer-events-none">
           {children}
         </span>
         <GlassFilter />
-      </Comp>
+      </button>
     )
   }
 )
