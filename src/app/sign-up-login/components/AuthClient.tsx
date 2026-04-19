@@ -185,54 +185,72 @@ export default function AuthClient() {
       </div>
 
       {/* Card */}
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 400, padding: '0 20px' }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link href="/product-search-results" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <img src="/logo.png" alt="ShopRadar" style={{ width: 36, height: 36, display: "block" }} />
-            <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 18, color: 'white', letterSpacing: '-0.02em' }}>ShopRadar</span>
-          </Link>
-        </div>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 420, padding: '0 20px' }}>
+
+        {/* Glass card */}
+        <div style={{
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)',
+          backdropFilter: 'blur(40px) saturate(1.8)',
+          WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
+          borderRadius: 28,
+          border: '1px solid rgba(255,255,255,0.15)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 32px 80px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)',
+          padding: '36px 32px 32px',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          {/* Top gloss sheen */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%)', borderRadius: '28px 28px 0 0', pointerEvents: 'none' }} />
+
+          {/* Logo */}
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <Link href="/product-search-results" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
+              <img src="/logo.png" alt="ShopRadar" style={{ width: 30, height: 30, display: 'block' }} />
+              <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 16, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.02em' }}>ShopRadar</span>
+            </Link>
+          </div>
 
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22 }}
           >
             {/* Headline */}
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 800, fontSize: 32, color: 'white', letterSpacing: '-0.03em', marginBottom: 6, lineHeight: 1.1 }}>
-                {tab === 'login' ? 'Welcome back' : 'Get started'}
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 26, color: 'white', letterSpacing: '-0.025em', marginBottom: 5, lineHeight: 1.15 }}>
+                {tab === 'login' ? 'Welcome back' : 'Create account'}
               </h1>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
-                {tab === 'login' ? 'Sign in to your ShopRadar account' : 'Create your free account'}
+              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 13, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                {tab === 'login' ? 'Sign in to your ShopRadar account' : 'Start finding better prices today'}
               </p>
             </div>
 
-            {/* Tab switcher */}
-            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 100, padding: 3, marginBottom: 24, border: '1px solid rgba(255,255,255,0.08)' }}>
+            {/* Tab switcher — pill style */}
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.07)', borderRadius: 14, padding: 4, marginBottom: 20, border: '1px solid rgba(255,255,255,0.1)' }}>
               {(['login', 'signup'] as const).map(t => (
-                <LiquidButton
+                <button
                   key={t}
-                  size="sm"
                   onClick={() => setTab(t)}
                   style={{
-                    flex: 1,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: tab === t ? 'white' : 'rgba(255,255,255,0.45)',
+                    flex: 1, padding: '8px 0', borderRadius: 10, border: 'none',
+                    cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                    transition: 'all 0.18s',
                     background: tab === t
-                      ? 'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.10) 100%)'
+                      ? 'linear-gradient(145deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)'
                       : 'transparent',
-                    border: tab === t ? '1px solid rgba(255,255,255,0.30)' : '1px solid transparent',
-                    boxShadow: tab === t ? 'inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 8px rgba(0,0,0,0.2)' : 'none',
+                    color: tab === t ? 'white' : 'rgba(255,255,255,0.4)',
+                    boxShadow: tab === t
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.15)'
+                      : 'none',
+                    backdropFilter: tab === t ? 'blur(8px)' : 'none',
                   }}
                 >
                   {t === 'login' ? 'Sign in' : 'Sign up'}
-                </LiquidButton>
+                </button>
               ))}
             </div>
 
@@ -242,9 +260,9 @@ export default function AuthClient() {
                 <input
                   type="text" placeholder="Full name" value={name}
                   onChange={e => setName(e.target.value)} required
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  style={{ width: '100%', padding: '13px 16px', borderRadius: 13, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'all 0.18s', boxSizing: 'border-box', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+                  onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(61,142,255,0.6)'; (e.target as HTMLInputElement).style.background = 'rgba(61,142,255,0.08)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(61,142,255,0.12)'; }}
+                  onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.07)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
                 />
               )}
               <input
@@ -258,9 +276,9 @@ export default function AuthClient() {
                 <input
                   type={showPwd ? 'text' : 'password'} placeholder="Password" value={password}
                   onChange={e => setPassword(e.target.value)} required
-                  style={{ width: '100%', padding: '12px 44px 12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  style={{ width: '100%', padding: '13px 44px 13px 16px', borderRadius: 13, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'all 0.18s', boxSizing: 'border-box', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+                  onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(61,142,255,0.6)'; (e.target as HTMLInputElement).style.background = 'rgba(61,142,255,0.08)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(61,142,255,0.12)'; }}
+                  onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.07)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
                 />
                 <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 0 }}>
                   {showPwd ? (
@@ -274,9 +292,9 @@ export default function AuthClient() {
                 <input
                   type="password" placeholder="Confirm password" value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)} required
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+                  style={{ width: '100%', padding: '13px 16px', borderRadius: 13, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'all 0.18s', boxSizing: 'border-box', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+                  onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(61,142,255,0.6)'; (e.target as HTMLInputElement).style.background = 'rgba(61,142,255,0.08)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(61,142,255,0.12)'; }}
+                  onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.07)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
                 />
               )}
 
@@ -315,6 +333,7 @@ export default function AuthClient() {
             )}
           </motion.div>
         </AnimatePresence>
+        </div> {/* end glass card */}
       </div>
     </div>
   );
