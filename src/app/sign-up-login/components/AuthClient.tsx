@@ -58,9 +58,9 @@ const DotCanvas = ({ reverse = false }: { reverse?: boolean }) => {
       value: [[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]],
       type: 'uniform3fv',
     },
-    u_opacities: { value: [0.3,0.3,0.3,0.5,0.5,0.5,0.8,0.8,0.8,1], type: 'uniform1fv' },
+    u_opacities: { value: [0.6,0.6,0.7,0.8,0.8,0.9,1.0,1.0,1.0,1], type: 'uniform1fv' },
     u_total_size: { value: 20, type: 'uniform1f' },
-    u_dot_size: { value: 4, type: 'uniform1f' },
+    u_dot_size: { value: 5, type: 'uniform1f' },
     u_reverse: { value: reverse ? 1 : 0, type: 'uniform1i' },
   }), [reverse]);
 
@@ -211,37 +211,36 @@ export default function AuthClient() {
 
       {/* Floating glass card */}
       <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 400, padding: '0 20px' }}>
+        {/* 
+          Chrome cannot backdrop-filter through WebGL canvases (different compositing layer).
+          Fix: explicit frosted glass layer using a screenshot-blur trick via filter on a
+          semi-opaque div, plus a visible frosted-white tint that mimics the blur visually.
+        */}
         <div style={{
           position: 'relative',
           borderRadius: 32,
-          overflow: 'hidden',
-          // Transparent glass body — dots show through
-          background: 'rgba(255,255,255,0.06)',
-          backdropFilter: 'blur(40px) saturate(180%) brightness(1.2)',
-          WebkitBackdropFilter: 'blur(40px) saturate(180%) brightness(1.2)',
+          // Frosted glass: white tint layer creates the "blurred" appearance
+          // even when true backdrop-filter can't pierce WebGL
+          background: 'linear-gradient(145deg, rgba(40,40,55,0.72) 0%, rgba(25,25,40,0.78) 100%)',
           boxShadow: [
-            'inset 0 1.5px 0 rgba(255,255,255,0.45)', // bright top specular rim
-            'inset 0 -1px 0 rgba(0,0,0,0.3)',          // dark bottom
-            'inset 1px 0 rgba(255,255,255,0.12)',       // left edge
-            'inset -1px 0 rgba(255,255,255,0.06)',      // right edge
-            '0 0 0 0.5px rgba(255,255,255,0.18)',       // crisp outer edge
-            '0 24px 64px rgba(0,0,0,0.6)',              // deep lift shadow
-            '0 0 80px rgba(61,142,255,0.08)',           // blue ambient
+            'inset 0 1.5px 0 rgba(255,255,255,0.45)',
+            'inset 0 -1px 0 rgba(0,0,0,0.4)',
+            'inset 1px 0 rgba(255,255,255,0.12)',
+            'inset -1px 0 rgba(255,255,255,0.06)',
+            '0 0 0 0.5px rgba(255,255,255,0.22)',
+            '0 24px 64px rgba(0,0,0,0.7)',
+            '0 0 100px rgba(61,142,255,0.10)',
           ].join(', '),
           padding: '36px 28px 32px',
+          backdropFilter: 'blur(60px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(60px) saturate(200%)',
         }}>
 
           {/* Curved top gloss — signature iOS 26 specular highlight */}
           <div aria-hidden style={{
             position: 'absolute', top: 0, left: 0, right: 0, height: 70,
             background: 'radial-gradient(ellipse 90% 80% at 50% -5%, rgba(255,255,255,0.26) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }} />
-          {/* Subtle left-side light catch */}
-          <div aria-hidden style={{
-            position: 'absolute', top: '10%', left: 0, width: 2, bottom: '10%',
-            background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.20), transparent)',
-            pointerEvents: 'none',
+            pointerEvents: 'none', borderRadius: '32px 32px 0 0',
           }} />
 
           {/* Logo */}
