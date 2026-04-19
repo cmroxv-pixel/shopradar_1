@@ -16,6 +16,7 @@ import CurrencyConverter from './CurrencyConverter';
 import CategoryFilter from './CategoryFilter';
 import { type Listing } from './mockData';
 import { SlidersHorizontal, TrendingDown, Zap, Globe, ChevronDown } from 'lucide-react';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 
 const STEPS = [
   { msg: 'Querying Google Shopping…',          pct: 12 },
@@ -517,13 +518,19 @@ export default function SearchResultsClient() {
 
           {/* CTA button */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 52, animation: 'heroFadeUp 1s 0.65s cubic-bezier(0.25,0.4,0.25,1) both' }}>
-            <button
-              className="btn-primary"
-              style={{ fontSize: 16, padding: '13px 36px' }}
+            <LiquidButton
+              size="xl"
               onClick={() => searchSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              style={{
+                fontSize: 16, fontWeight: 700,
+                color: 'hsl(var(--primary))',
+                background: 'linear-gradient(135deg, rgba(61,142,255,0.38) 0%, rgba(61,142,255,0.14) 100%)',
+                border: '1px solid rgba(61,142,255,0.45)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), 0 0 28px rgba(61,142,255,0.22), 0 4px 16px rgba(0,0,0,0.15)',
+              }}
             >
               Start comparing →
-            </button>
+            </LiquidButton>
           </div>
 
           {/* Stats row */}
