@@ -5,6 +5,7 @@ import WatchlistTab from './WatchlistTab';
 import AlertsTab from './AlertsTab';
 import { type WatchlistItem, type PriceAlert } from './watchlistData';
 import Link from 'next/link';
+import { LiquidButton } from '@/components/ui/LiquidButton';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -240,9 +241,13 @@ export default function WatchlistClient() {
         </div>
         <h2 style={{ fontSize: 20, fontWeight: 700, color: 'hsl(var(--foreground))', margin: 0 }}>Sign in to view your watchlist</h2>
         <p style={{ fontSize: 14, color: 'hsl(var(--muted-foreground))', maxWidth: 300, margin: 0, lineHeight: 1.6 }}>Save products and set price alerts that persist across sessions.</p>
-        <Link href="/sign-up-login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
+        <LiquidButton size="lg" onClick={() => window.location.href='/sign-up-login'}
+          style={{ color: 'hsl(var(--primary))', fontWeight: 600, fontSize: 14,
+            background: 'linear-gradient(135deg, rgba(61,142,255,0.35) 0%, rgba(61,142,255,0.12) 100%)',
+            border: '1px solid rgba(61,142,255,0.4)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 0 16px rgba(61,142,255,0.15)' }}>
           Sign in
-        </Link>
+        </LiquidButton>
       </div>
     );
   }
@@ -271,14 +276,17 @@ export default function WatchlistClient() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleRefreshAll} disabled={refreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 100, border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--card))', color: 'hsl(var(--foreground))', cursor: refreshing ? 'wait' : 'pointer', fontSize: 13, fontWeight: 500, opacity: refreshing ? 0.6 : 1 }}>
+          <LiquidButton size="sm" onClick={handleRefreshAll} disabled={refreshing}
+            style={{ color: 'hsl(var(--foreground))', fontWeight: 500, fontSize: 13, opacity: refreshing ? 0.6 : 1 }}>
             {refreshing ? 'Refreshing…' : '↻ Refresh'}
-          </button>
-          <Link href="/product-search-results"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+          </LiquidButton>
+          <LiquidButton size="sm" onClick={() => window.location.href='/product-search-results'}
+            style={{ color: 'hsl(var(--primary))', fontWeight: 600, fontSize: 13,
+              background: 'linear-gradient(135deg, rgba(61,142,255,0.35) 0%, rgba(61,142,255,0.12) 100%)',
+              border: '1px solid rgba(61,142,255,0.4)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 0 16px rgba(61,142,255,0.12)' }}>
             + Add products
-          </Link>
+          </LiquidButton>
         </div>
       </div>
 
@@ -300,13 +308,20 @@ export default function WatchlistClient() {
       {/* Tabs */}
       <div style={{ display: 'flex', background: 'hsl(var(--muted))', borderRadius: 12, padding: 4, width: 'fit-content', border: '1px solid hsl(var(--border))' }}>
         {(['watchlist', 'alerts'] as Tab[]).map(t => (
-          <button key={t} onClick={() => setActiveTab(t)}
-            style={{ padding: '7px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: activeTab === t ? 700 : 400, background: activeTab === t ? 'hsl(var(--card))' : 'transparent', color: activeTab === t ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', transition: 'all 0.15s', boxShadow: activeTab === t ? '0 1px 6px rgba(0,0,0,0.08)' : 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <LiquidButton key={t} size="sm" onClick={() => setActiveTab(t)}
+            style={{
+              fontSize: 13,
+              fontWeight: activeTab === t ? 700 : 500,
+              color: activeTab === t ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+              gap: 6,
+              background: activeTab === t ? undefined : 'transparent',
+              border: activeTab === t ? '1px solid rgba(255,255,255,0.18)' : '1px solid transparent',
+            }}>
             {t === 'watchlist' ? 'Watchlist' : 'Price Alerts'}
             {t === 'alerts' && triggeredCount > 0 && (
               <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'hsl(var(--success))', color: 'white', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{triggeredCount}</span>
             )}
-          </button>
+          </LiquidButton>
         ))}
       </div>
 
