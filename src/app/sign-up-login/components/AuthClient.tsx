@@ -91,9 +91,9 @@ export default function AuthClient() {
           {/* Dot grid — CSS only, blurs correctly */}
           <div style={{
             position: 'absolute', inset: 0,
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.35) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-            opacity: 0.4,
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.55) 1.5px, transparent 1.5px)',
+            backgroundSize: '24px 24px',
+            opacity: 1,
           }} />
         </div>
 
@@ -101,7 +101,7 @@ export default function AuthClient() {
         <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 400, padding: '0 20px' }}>
           <div style={{
             borderRadius: 32,
-            background: 'rgba(255,255,255,0.07)',
+            background: 'rgba(255,255,255,0.04)',
             backdropFilter: 'blur(48px) saturate(180%) brightness(1.1)',
             WebkitBackdropFilter: 'blur(48px) saturate(180%) brightness(1.1)',
             boxShadow: [
