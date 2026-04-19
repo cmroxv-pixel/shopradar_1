@@ -200,166 +200,173 @@ export default function AuthClient() {
     <div style={{ minHeight: '100vh', background: '#000', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#111', border: '1px solid #333', color: 'white', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 13 } }} />
 
-      {/* Dot canvas background */}
+      {/* Animated dot canvas — visible through glass card */}
       <div style={{ position: 'absolute', inset: 0 }}>
         {!reverseCanvas && <DotCanvas reverse={false} />}
         {reverseCanvas && <DotCanvas reverse={true} />}
-        {/* Radial fade from center */}
-        {/* Top + bottom fades */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '25%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '15%', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }} />
+        {/* Subtle edge vignette only — DO NOT darken center */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '20%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.85), transparent)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '15%', background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)' }} />
       </div>
 
-      {/* Card */}
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 420, padding: '0 20px' }}>
-
-        {/* Glass card */}
+      {/* Floating glass card */}
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 400, padding: '0 20px' }}>
         <div style={{
-          background: 'linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)',
-          backdropFilter: 'blur(40px) saturate(1.8)',
-          WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
-          borderRadius: 28,
-          border: '1px solid rgba(255,255,255,0.15)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 32px 80px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)',
-          padding: '36px 32px 32px',
-          overflow: 'hidden',
           position: 'relative',
+          borderRadius: 32,
+          overflow: 'hidden',
+          // Transparent glass body — dots show through
+          background: 'rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(40px) saturate(180%) brightness(1.2)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%) brightness(1.2)',
+          boxShadow: [
+            'inset 0 1.5px 0 rgba(255,255,255,0.45)', // bright top specular rim
+            'inset 0 -1px 0 rgba(0,0,0,0.3)',          // dark bottom
+            'inset 1px 0 rgba(255,255,255,0.12)',       // left edge
+            'inset -1px 0 rgba(255,255,255,0.06)',      // right edge
+            '0 0 0 0.5px rgba(255,255,255,0.18)',       // crisp outer edge
+            '0 24px 64px rgba(0,0,0,0.6)',              // deep lift shadow
+            '0 0 80px rgba(61,142,255,0.08)',           // blue ambient
+          ].join(', '),
+          padding: '36px 28px 32px',
         }}>
-          {/* Top gloss sheen */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%)', borderRadius: '28px 28px 0 0', pointerEvents: 'none' }} />
+
+          {/* Curved top gloss — signature iOS 26 specular highlight */}
+          <div aria-hidden style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 70,
+            background: 'radial-gradient(ellipse 90% 80% at 50% -5%, rgba(255,255,255,0.26) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          {/* Subtle left-side light catch */}
+          <div aria-hidden style={{
+            position: 'absolute', top: '10%', left: 0, width: 2, bottom: '10%',
+            background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.20), transparent)',
+            pointerEvents: 'none',
+          }} />
 
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <Link href="/product-search-results" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
-              <img src="/logo.png" alt="ShopRadar" style={{ width: 30, height: 30, display: 'block' }} />
-              <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 16, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.02em' }}>ShopRadar</span>
-            </Link>
+            <a href="/product-search-results" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
+              <img src="/logo.png" alt="ShopRadar" style={{ width: 28, height: 28 }} />
+              <span style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 15, color: 'rgba(255,255,255,0.90)', letterSpacing: '-0.02em' }}>ShopRadar</span>
+            </a>
           </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22 }}
-          >
-            {/* Headline */}
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 26, color: 'white', letterSpacing: '-0.025em', marginBottom: 5, lineHeight: 1.15 }}>
-                {tab === 'login' ? 'Welcome back' : 'Create account'}
-              </h1>
-              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 13, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
-                {tab === 'login' ? 'Sign in to your ShopRadar account' : 'Start finding better prices today'}
-              </p>
-            </div>
+          <AnimatePresence mode="wait">
+            <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
 
-            {/* Tab switcher — pill style */}
-            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.07)', borderRadius: 14, padding: 4, marginBottom: 20, border: '1px solid rgba(255,255,255,0.1)' }}>
-              {(['login', 'signup'] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  style={{
-                    flex: 1, padding: '8px 0', borderRadius: 10, border: 'none',
-                    cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-                    transition: 'all 0.18s',
-                    background: tab === t
-                      ? 'linear-gradient(145deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)'
-                      : 'transparent',
-                    color: tab === t ? 'white' : 'rgba(255,255,255,0.4)',
-                    boxShadow: tab === t
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.15)'
-                      : 'none',
-                    backdropFilter: tab === t ? 'blur(8px)' : 'none',
-                  }}
-                >
-                  {t === 'login' ? 'Sign in' : 'Sign up'}
-                </button>
-              ))}
-            </div>
-
-            {/* Form */}
-            <form onSubmit={tab === 'login' ? handleLogin : handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {tab === 'signup' && (
-                <input
-                  type="text" placeholder="Full name" value={name}
-                  onChange={e => setName(e.target.value)} required
-                  style={{ width: '100%', padding: '13px 16px', borderRadius: 13, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'all 0.18s', boxSizing: 'border-box', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
-                  onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(61,142,255,0.6)'; (e.target as HTMLInputElement).style.background = 'rgba(61,142,255,0.08)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(61,142,255,0.12)'; }}
-                  onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.07)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
-                />
-              )}
-              <input
-                type="email" placeholder="Email address" value={email}
-                onChange={e => setEmail(e.target.value)} required
-                style={{ width: '100%', padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'border 0.15s' }}
-                onFocus={e => (e.target.style.borderColor = 'rgba(255,255,255,0.3)')}
-                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-              />
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPwd ? 'text' : 'password'} placeholder="Password" value={password}
-                  onChange={e => setPassword(e.target.value)} required
-                  style={{ width: '100%', padding: '13px 44px 13px 16px', borderRadius: 13, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'all 0.18s', boxSizing: 'border-box', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
-                  onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(61,142,255,0.6)'; (e.target as HTMLInputElement).style.background = 'rgba(61,142,255,0.08)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(61,142,255,0.12)'; }}
-                  onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.07)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
-                />
-                <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', padding: 0 }}>
-                  {showPwd ? (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/><path d="M2 2l12 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/></svg>
-                  )}
-                </button>
+              {/* Headline */}
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: 26, color: 'white', letterSpacing: '-0.025em', marginBottom: 5, lineHeight: 1.1 }}>
+                  {tab === 'login' ? 'Welcome back' : 'Create account'}
+                </h1>
+                <p style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13.5, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                  {tab === 'login' ? 'Sign in to your ShopRadar account' : 'Start finding better prices today'}
+                </p>
               </div>
-              {tab === 'signup' && (
-                <input
-                  type="password" placeholder="Confirm password" value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)} required
-                  style={{ width: '100%', padding: '13px 16px', borderRadius: 13, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', fontSize: 14, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: 'none', transition: 'all 0.18s', boxSizing: 'border-box', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
-                  onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(61,142,255,0.6)'; (e.target as HTMLInputElement).style.background = 'rgba(61,142,255,0.08)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(61,142,255,0.12)'; }}
-                  onBlur={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.target as HTMLInputElement).style.background = 'rgba(255,255,255,0.07)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
-                />
-              )}
 
-              {lockedUntil && lockCountdown > 0 && (
-                <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', marginBottom: 12, fontSize: 12, color: '#ef4444', textAlign: 'center' }}>
-                  🔒 Too many attempts — locked for {Math.floor(lockCountdown / 60)}:{String(lockCountdown % 60).padStart(2, '0')}
+              {/* iOS 26 segmented control */}
+              <div style={{
+                display: 'flex', gap: 3, padding: 3, marginBottom: 20,
+                background: 'rgba(0,0,0,0.25)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderRadius: 14,
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.4), inset 0 0 0 0.5px rgba(255,255,255,0.08)',
+              }}>
+                {(['login', 'signup'] as const).map(t => (
+                  <button key={t} onClick={() => setTab(t)} style={{
+                    flex: 1, padding: '9px 0', borderRadius: 11, border: 'none', cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600,
+                    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                    transition: 'all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)',
+                    color: tab === t ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.35)',
+                    background: tab === t ? 'rgba(255,255,255,0.14)' : 'transparent',
+                    backdropFilter: tab === t ? 'blur(16px)' : 'none',
+                    WebkitBackdropFilter: tab === t ? 'blur(16px)' : 'none',
+                    boxShadow: tab === t
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 0 rgba(0,0,0,0.15), 0 1px 6px rgba(0,0,0,0.2)'
+                      : 'none',
+                  }}>
+                    {t === 'login' ? 'Sign in' : 'Sign up'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Form */}
+              <form onSubmit={tab === 'login' ? handleLogin : handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {tab === 'signup' && (
+                  <input type="text" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} required style={inputStyle}
+                    onFocus={e => Object.assign((e.target as HTMLElement).style, inputFocus)}
+                    onBlur={e => Object.assign((e.target as HTMLElement).style, inputBlur)} />
+                )}
+                <input type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle}
+                  onFocus={e => Object.assign((e.target as HTMLElement).style, inputFocus)}
+                  onBlur={e => Object.assign((e.target as HTMLElement).style, inputBlur)} />
+                <div style={{ position: 'relative' }}>
+                  <input type={showPwd ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required
+                    style={{ ...inputStyle, paddingRight: 44 }}
+                    onFocus={e => Object.assign((e.target as HTMLElement).style, inputFocus)}
+                    onBlur={e => Object.assign((e.target as HTMLElement).style, inputBlur)} />
+                  <button type="button" onClick={() => setShowPwd(p => !p)} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0 }}>
+                    {showPwd
+                      ? <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/><path d="M2 2l12 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/></svg>
+                    }
+                  </button>
                 </div>
-              )}
-              <LiquidButton
-                type="submit"
-                size="lg"
-                disabled={loading || (!!lockedUntil && Date.now() < lockedUntil)}
-                style={{
-                  width: '100%',
-                  marginTop: 6,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: '-0.01em',
-                  color: 'white',
-                  background: 'linear-gradient(135deg, rgba(61,142,255,0.55) 0%, rgba(61,142,255,0.25) 100%)',
-                  border: '1px solid rgba(61,142,255,0.5)',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), 0 0 20px rgba(61,142,255,0.2)',
-                }}
-              >
-                {loading ? 'Please wait…' : tab === 'login' ? 'Sign in →' : 'Create account →'}
-              </LiquidButton>
-            </form>
+                {tab === 'signup' && (
+                  <input type="password" placeholder="Confirm password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required style={inputStyle}
+                    onFocus={e => Object.assign((e.target as HTMLElement).style, inputFocus)}
+                    onBlur={e => Object.assign((e.target as HTMLElement).style, inputBlur)} />
+                )}
 
-            {tab === 'login' && (
-              <p style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
-                Don't have an account?{' '}
-                <button onClick={() => setTab('signup')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>
-                  Sign up
+                {lockedUntil && lockCountdown > 0 && (
+                  <div style={{ padding: '10px 14px', borderRadius: 12, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', fontSize: 12, color: '#ef4444', textAlign: 'center' }}>
+                    🔒 Locked for {Math.floor(lockCountdown / 60)}:{String(lockCountdown % 60).padStart(2, '0')}
+                  </div>
+                )}
+
+                {/* Blue liquid glass submit */}
+                <button type="submit" disabled={loading || (!!lockedUntil && Date.now() < lockedUntil)}
+                  style={{
+                    position: 'relative', overflow: 'hidden',
+                    width: '100%', padding: '14px 0', marginTop: 4,
+                    borderRadius: 16, border: 'none',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: 15, fontWeight: 700,
+                    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                    letterSpacing: '-0.01em',
+                    color: 'white',
+                    background: 'linear-gradient(160deg, rgba(80,155,255,0.85) 0%, rgba(41,100,220,0.80) 100%)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.40), inset 0 -1.5px 0 rgba(0,0,0,0.20), 0 8px 28px rgba(41,100,220,0.45), 0 2px 8px rgba(0,0,0,0.25)',
+                    transition: 'all 0.2s',
+                    opacity: loading ? 0.7 : 1,
+                  }}
+                  onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.filter = 'brightness(1.12)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = 'none'; }}
+                >
+                  <span aria-hidden style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', background: 'linear-gradient(180deg, rgba(255,255,255,0.20) 0%, transparent 100%)', borderRadius: '16px 16px 0 0', pointerEvents: 'none' }} />
+                  <span style={{ position: 'relative', zIndex: 1 }}>
+                    {loading ? 'Please wait…' : tab === 'login' ? 'Sign in →' : 'Create account →'}
+                  </span>
                 </button>
-              </p>
-            )}
-          </motion.div>
-        </AnimatePresence>
-        </div> {/* end glass card */}
+              </form>
+
+              {tab === 'login' && (
+                <p style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: 'rgba(255,255,255,0.28)', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+                  Don't have an account?{' '}
+                  <button onClick={() => setTab('signup')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 600, textDecoration: 'underline' }}>
+                    Sign up
+                  </button>
+                </p>
+              )}
+
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
