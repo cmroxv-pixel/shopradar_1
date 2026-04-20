@@ -101,13 +101,13 @@ export default function AuthClient() {
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      style={{ minHeight: '100vh', background: '#05050a', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+      style={{ minHeight: '100vh', background: '#0a0a0a', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
     >
       <style>{`
         .auth-inp:focus {
-          border-color: rgba(61,142,255,0.65) !important;
-          background: rgba(61,142,255,0.09) !important;
-          box-shadow: 0 0 0 3px rgba(61,142,255,0.15) !important;
+          border-color: rgba(255,255,255,0.40) !important;
+          background: rgba(255,255,255,0.08) !important;
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.08) !important;
         }
       `}</style>
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#111', border: '1px solid #333', color: 'white', fontSize: 13 } }} />
@@ -122,12 +122,7 @@ export default function AuthClient() {
         <GridPattern offsetX={gridOffsetX} offsetY={gridOffsetY} />
       </motion.div>
 
-      {/* Colour orbs */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div style={{ position: 'absolute', right: '-15%', top: '-15%', width: '45%', height: '45%', borderRadius: '50%', background: 'rgba(61,142,255,0.22)', filter: 'blur(100px)' }} />
-        <div style={{ position: 'absolute', left: '-10%', bottom: '-15%', width: '40%', height: '40%', borderRadius: '50%', background: 'rgba(100,60,255,0.18)', filter: 'blur(120px)' }} />
-        <div style={{ position: 'absolute', right: '20%', bottom: '10%', width: '25%', height: '25%', borderRadius: '50%', background: 'rgba(0,180,255,0.12)', filter: 'blur(80px)' }} />
-      </div>
+
 
       {/* Glass card */}
       <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 400, padding: '0 20px' }}>
@@ -139,7 +134,7 @@ export default function AuthClient() {
           WebkitBackdropFilter: 'blur(40px) brightness(1.5) saturate(1.4)',
         }} />
         {/* Tint */}
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 32, zIndex: 1, background: 'linear-gradient(145deg, rgba(15,18,45,0.55) 0%, rgba(8,10,30,0.60) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 32, zIndex: 1, background: 'linear-gradient(145deg, rgba(12,12,12,0.60) 0%, rgba(6,6,6,0.65) 100%)' }} />
 
         {/* Content */}
         <div style={{
@@ -151,7 +146,7 @@ export default function AuthClient() {
             'inset -1px 0 0 rgba(255,255,255,0.06)',
             '0 0 0 0.5px rgba(255,255,255,0.18)',
             '0 24px 64px rgba(0,0,0,0.65)',
-            '0 0 80px rgba(61,142,255,0.12)',
+            '0 0 40px rgba(255,255,255,0.03)',
           ].join(', '),
         }}>
           {/* Top gloss */}
@@ -217,8 +212,9 @@ export default function AuthClient() {
                     borderRadius: 16, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
                     fontSize: 15, fontWeight: 700, color: 'white',
                     fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-                    background: 'linear-gradient(160deg, rgba(80,155,255,0.92) 0%, rgba(41,100,220,0.88) 100%)',
-                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.42), inset 0 -1.5px 0 rgba(0,0,0,0.20), 0 8px 28px rgba(41,100,220,0.50)',
+                    background: 'linear-gradient(160deg, rgba(255,255,255,0.95) 0%, rgba(220,220,220,0.90) 100%)',
+                    color: '#000',
+                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.80), inset 0 -1.5px 0 rgba(0,0,0,0.10), 0 8px 28px rgba(0,0,0,0.35)',
                     opacity: loading ? 0.7 : 1, transition: 'all 0.2s',
                   }}
                   onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.filter = 'brightness(1.1)'; }}
