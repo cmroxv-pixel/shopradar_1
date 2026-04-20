@@ -3,48 +3,56 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── LIGHT (default) ── */
+  /* ── LIGHT ── */
   :root {
-    --primary: 218 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --background: 0 0% 97%;
-    --foreground: 0 0% 8%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
-    --muted: 0 0% 93%;
-    --muted-foreground: 0 0% 48%;
-    --border: 0 0% 88%;
-    --input: 0 0% 93%;
-    --ring: 218 100% 50%;
-    --accent: 218 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --border: 0 0% 89%;
+    --input: 0 0% 83%;
+    --ring: 0 0% 71%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 98%;
     --success: 152 60% 40%;
     --warning: 38 92% 50%;
-    --radius: 0.875rem;
+    --radius: 0.625rem;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
   }
 
   /* ── DARK ── */
   [data-mode="dark"] {
-    --primary: 218 100% 62%;
-    --primary-foreground: 0 0% 100%;
-    --background: 0 0% 5%;
-    --foreground: 0 0% 92%;
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 92%;
-    --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 52%;
-    --border: 0 0% 16%;
-    --input: 0 0% 13%;
-    --ring: 218 100% 62%;
-    --accent: 218 100% 62%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 58%;
-    --destructive-foreground: 0 0% 100%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 98%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 63%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 32%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 84% 60%;
     --success: 152 55% 46%;
     --warning: 38 85% 55%;
-    --radius: 0.875rem;
+    --radius: 0.625rem;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 98%;
   }
 
   * { border-color: hsl(var(--border)); box-sizing: border-box; }
@@ -55,14 +63,13 @@
   body {
     background: hsl(var(--background));
     color: hsl(var(--foreground));
-    /* Helvetica stack */
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  /* Subtle dot grid background — inspired by the bento/canvas dot aesthetic */
+  /* Dot grid background */
   body::before {
     content: '';
     position: fixed;
@@ -94,14 +101,11 @@
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes shimmer {
   0%   { background-position: -200% center; }
   100% { background-position:  200% center; }
 }
-
 @keyframes heroFadeUp {
   from { opacity: 0; transform: translateY(30px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -119,8 +123,8 @@
   box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
 .search-glow:focus-within {
-  border-color: hsl(var(--primary) / 0.5);
-  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.08), 0 2px 20px rgba(0,0,0,0.08);
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.06), 0 2px 20px rgba(0,0,0,0.08);
 }
 
 /* ── Location glow ── */
@@ -131,14 +135,14 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .location-glow:focus-within {
-  border-color: hsl(var(--primary) / 0.4);
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.07);
+  border-color: hsl(var(--primary) / 0.35);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.06);
 }
 
 /* ── Buttons ── */
 .btn-primary {
   background: hsl(var(--primary));
-  color: white;
+  color: hsl(var(--primary-foreground));
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 600;
   font-size: 14px;
@@ -147,14 +151,14 @@
   border: none;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 2px 12px hsl(var(--primary) / 0.3);
+  box-shadow: 0 2px 12px hsl(var(--primary) / 0.2);
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 .btn-primary:hover:not(:disabled) {
-  opacity: 0.88;
+  opacity: 0.85;
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px hsl(var(--primary) / 0.4);
+  box-shadow: 0 4px 20px hsl(var(--primary) / 0.3);
 }
 .btn-primary:active:not(:disabled) { transform: translateY(0); }
 .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -174,16 +178,16 @@
 .btn-ghost:hover {
   color: hsl(var(--foreground));
   border-color: hsl(var(--primary) / 0.4);
-  background: hsl(var(--primary) / 0.05);
+  background: hsl(var(--primary) / 0.04);
 }
 .btn-ghost.active {
   color: hsl(var(--primary));
   border-color: hsl(var(--primary));
-  background: hsl(var(--primary) / 0.08);
+  background: hsl(var(--primary) / 0.06);
   font-weight: 600;
 }
 
-/* ── Product card — bento style ── */
+/* ── Product card ── */
 .product-card {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border) / 0.8);
@@ -206,16 +210,16 @@
   font-size: 11px; font-weight: 600; letter-spacing: -0.01em;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-.badge-primary  { background: hsl(var(--primary) / 0.1);     color: hsl(var(--primary));     border: 1px solid hsl(var(--primary) / 0.2); }
-.badge-success  { background: hsl(var(--success) / 0.1);     color: hsl(var(--success));     border: 1px solid hsl(var(--success) / 0.2); }
-.badge-accent   { background: hsl(var(--accent)  / 0.1);     color: hsl(var(--accent));      border: 1px solid hsl(var(--accent)  / 0.2); }
-.badge-warning  { background: hsl(var(--warning)  / 0.1);    color: hsl(var(--warning));     border: 1px solid hsl(var(--warning) / 0.2); }
+.badge-primary  { background: hsl(var(--primary) / 0.08);  color: hsl(var(--primary));    border: 1px solid hsl(var(--primary) / 0.15); }
+.badge-success  { background: hsl(var(--success) / 0.1);   color: hsl(var(--success));    border: 1px solid hsl(var(--success) / 0.2); }
+.badge-accent   { background: hsl(var(--muted));            color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); }
+.badge-warning  { background: hsl(var(--warning) / 0.1);   color: hsl(var(--warning));    border: 1px solid hsl(var(--warning) / 0.2); }
 
 /* ── Progress ── */
 .progress-track { height: 2px; background: hsl(var(--border)); }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, hsl(var(--primary)), hsl(218 100% 70%), hsl(var(--primary)));
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(0 0% 60%), hsl(var(--primary)));
   background-size: 200% auto;
   animation: shimmer 1.6s linear infinite;
   border-radius: 1px;
@@ -229,9 +233,7 @@
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid hsl(var(--border));
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 50;
 }
 
@@ -244,19 +246,12 @@ main > * {
   padding-right: 24px;
 }
 
-/* ── Bottom nav ── */
-/* Floating dock */
-.bottom-nav {
-  background: transparent;
-  border: none;
-}
-
 /* ── Tailwind compat ── */
 @layer utilities {
   .text-primary           { color: hsl(var(--primary)); }
   .text-muted-foreground  { color: hsl(var(--muted-foreground)); }
   .text-foreground        { color: hsl(var(--foreground)); }
-  .text-accent            { color: hsl(var(--accent)); }
+  .text-accent            { color: hsl(var(--foreground)); }
   .text-destructive       { color: hsl(var(--destructive)); }
   .text-success           { color: hsl(var(--success)); }
   .text-warning           { color: hsl(var(--warning)); }
@@ -268,10 +263,10 @@ main > * {
   .border-primary         { border-color: hsl(var(--primary)); }
   .bg-primary\/10         { background-color: hsl(var(--primary) / 0.1); }
   .bg-primary\/20         { background-color: hsl(var(--primary) / 0.2); }
-  .bg-accent\/10          { background-color: hsl(var(--accent) / 0.1); }
+  .bg-accent\/10          { background-color: hsl(var(--muted)); }
   .bg-success\/10         { background-color: hsl(var(--success) / 0.1); }
   .border-success\/20     { border-color: hsl(var(--success) / 0.2); }
-  .border-accent\/20      { border-color: hsl(var(--accent) / 0.2); }
+  .border-accent\/20      { border-color: hsl(var(--border)); }
   .border-primary\/20     { border-color: hsl(var(--primary) / 0.2); }
   .border-primary\/30     { border-color: hsl(var(--primary) / 0.3); }
   .bg-destructive\/10     { background-color: hsl(var(--destructive) / 0.1); }
