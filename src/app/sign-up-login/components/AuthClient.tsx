@@ -25,7 +25,16 @@ export default function AuthClient() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [redirecting, setRedirecting] = useState(false);
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
+
+  // Already logged in — redirect away immediately
+  useEffect(() => {
+    if (!authLoading && user) {
+      setRedirecting(true);
+      router.replace('/watchlist-price-alerts');
+    }
+  }, [user, authLoading, router]);
   const router = useRouter();
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
@@ -67,8 +76,9 @@ export default function AuthClient() {
     setLoading(true);
     try {
       await signIn(email, password);
+      setRedirecting(true);
       toast.success('Welcome back!');
-      setTimeout(() => router.push('/watchlist-price-alerts'), 1000);
+      router.replace('/watchlist-price-alerts');
     } catch (err: any) {
       const n = attempts + 1; setAttempts(n);
       if (n >= 5) setLockedUntil(Date.now() + 5 * 60 * 1000);
@@ -82,8 +92,9 @@ export default function AuthClient() {
     setLoading(true);
     try {
       await signUp(email, password, name);
+      setRedirecting(true);
       toast.success('Account created!');
-      setTimeout(() => router.push('/watchlist-price-alerts'), 1000);
+      router.replace('/watchlist-price-alerts');
     } catch (err: any) { toast.error(err.message || 'Sign up failed'); }
     finally { setLoading(false); }
   };
@@ -110,6 +121,9 @@ export default function AuthClient() {
           box-shadow: 0 0 0 3px rgba(255,255,255,0.08) !important;
         }
       `}</style>
+      {redirecting && (
+        <div style={{ position: 'fixed', inset: 0, background: '#0a0a0a', zIndex: 9999 }} />
+      )}
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#111', border: '1px solid #333', color: 'white', fontSize: 13 } }} />
 
       {/* Base dim grid */}
