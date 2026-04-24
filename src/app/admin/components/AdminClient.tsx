@@ -188,7 +188,7 @@ export default function AdminClient() {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={fetchData} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 100, border: '1px solid hsl(var(--border))', background: 'transparent', color: 'hsl(var(--muted-foreground))', cursor: 'pointer' }}>↻ Refresh</button>
-            <button onClick={() => router.push('/product-search-results')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 100, border: 'none', background: 'hsl(var(--primary))', color: 'white', cursor: 'pointer', fontWeight: 600 }}>← Back to app</button>
+            <button onClick={() => router.push('/product-search-results')} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 100, border: 'none', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', cursor: 'pointer', fontWeight: 600 }}>← Back to app</button>
           </div>
         </div>
       </div>
@@ -241,7 +241,7 @@ export default function AdminClient() {
             <Ch mb={16}><Hd t="📢 Announcement Banner" s={currentBanner ? `Active: "${currentBanner}"` : 'No banner'} />
               <div style={{ padding: '14px 20px', display: 'flex', gap: 8 }}>
                 <input value={banner} onChange={e => setBanner(e.target.value)} placeholder="Message to show all users..." style={{ flex: 1, padding: '8px 14px', borderRadius: 10, border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))', fontSize: 13, outline: 'none' }} />
-                <button onClick={saveBanner} disabled={bannerSaving || !banner} style={{ padding: '8px 16px', borderRadius: 10, background: 'hsl(var(--primary))', color: 'white', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: !banner ? 0.5 : 1 }}>Save</button>
+                <button onClick={saveBanner} disabled={bannerSaving || !banner} style={{ padding: '8px 16px', borderRadius: 10, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: !banner ? 0.5 : 1 }}>Save</button>
                 {currentBanner && <button onClick={async () => { await supabase.from('admin_settings').upsert({ key: 'announcement_banner', value: '' }); setCurrentBanner(''); setBanner(''); toast.success('Banner cleared'); }} style={{ padding: '8px 14px', borderRadius: 10, background: 'hsl(var(--destructive) / 0.1)', color: 'hsl(var(--destructive))', border: 'none', cursor: 'pointer', fontSize: 13 }}>Clear</button>}
               </div>
             </Ch>
@@ -252,7 +252,7 @@ export default function AdminClient() {
                 <div key={u.id} onClick={() => { setTab('users'); loadUserDetail(u); }} style={{ padding: '11px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: i < 4 ? '1px solid hsl(var(--border))' : 'none', cursor: 'pointer' }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--muted))'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>{(u.full_name || u.email).charAt(0).toUpperCase()}</div>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12 }}>{(u.full_name || u.email).charAt(0).toUpperCase()}</div>
                     <div><p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{u.full_name || u.email}</p><p style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))', margin: 0 }}>{u.email}</p></div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -277,7 +277,7 @@ export default function AdminClient() {
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ width: 26, height: 26, borderRadius: '50%', background: u.id === ADMIN_ID ? 'hsl(var(--primary))' : 'hsl(var(--muted))', color: u.id === ADMIN_ID ? 'white' : 'hsl(var(--muted-foreground))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 11, flexShrink: 0 }}>{(u.full_name || u.email).charAt(0).toUpperCase()}</div>
-                          <span style={{ fontWeight: 500, fontSize: 12 }}>{u.full_name || '—'}{u.id === ADMIN_ID && <span style={{ marginLeft: 4, fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700 }}>ADMIN</span>}</span>
+                          <span style={{ fontWeight: 500, fontSize: 12 }}>{u.full_name || '—'}{u.id === ADMIN_ID && <span style={{ marginLeft: 4, fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', fontWeight: 700 }}>ADMIN</span>}</span>
                         </div>
                       </td>
                       <td style={{ padding: '10px 14px', color: 'hsl(var(--muted-foreground))', fontSize: 11 }}>{u.email}</td>
@@ -302,7 +302,7 @@ export default function AdminClient() {
               </div>
               <div style={{ padding: '16px 18px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15 }}>{(selectedUser.full_name || selectedUser.email).charAt(0).toUpperCase()}</div>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15 }}>{(selectedUser.full_name || selectedUser.email).charAt(0).toUpperCase()}</div>
                   <div><p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{selectedUser.full_name || 'No name'}</p><p style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', margin: 0 }}>{selectedUser.email}</p></div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
@@ -358,7 +358,7 @@ export default function AdminClient() {
               </div>
             </Ch>
             <Ch mb={0}><Hd t="📡 Events (7 days)" r={<a href={`https://us.posthog.com/project/${PH_PROJECT}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'hsl(var(--primary))', textDecoration: 'none' }}>PostHog →</a>} />
-              {phEvents.length === 0 ? <div style={{ padding: 32, textAlign: 'center' }}><p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13, marginBottom: 12 }}>No data or PostHog API unavailable on free tier</p><a href={`https://us.posthog.com/project/${PH_PROJECT}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none' }}>Open PostHog →</a></div>
+              {phEvents.length === 0 ? <div style={{ padding: 32, textAlign: 'center' }}><p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13, marginBottom: 12 }}>No data or PostHog API unavailable on free tier</p><a href={`https://us.posthog.com/project/${PH_PROJECT}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', textDecoration: 'none' }}>Open PostHog →</a></div>
                 : phEvents.map((e, i) => <div key={i} style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: i < phEvents.length - 1 ? '1px solid hsl(var(--border))' : 'none' }}><span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'hsl(var(--muted))', fontFamily: 'monospace', color: 'hsl(var(--muted-foreground))' }}>{e.event}</span><div style={{ display: 'flex', gap: 14, alignItems: 'center' }}><span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>{new Date(e.last_seen).toLocaleDateString('en-AU')}</span><span style={{ fontSize: 13, fontWeight: 700, color: 'hsl(var(--primary))' }}>{e.count.toLocaleString()}</span></div></div>)}
             </Ch>
           </div>}
@@ -375,7 +375,7 @@ export default function AdminClient() {
             </div>
             <Ch mb={0}><Hd t="Stripe" />
               <div style={{ padding: '16px 20px', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {[['Payments', 'https://dashboard.stripe.com/test/payments'], ['Subscriptions', 'https://dashboard.stripe.com/test/subscriptions'], ['Customers', 'https://dashboard.stripe.com/test/customers']].map(([l, u]) => <a key={l} href={u} target="_blank" rel="noopener noreferrer" style={{ padding: '9px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>{l} →</a>)}
+                {[['Payments', 'https://dashboard.stripe.com/test/payments'], ['Subscriptions', 'https://dashboard.stripe.com/test/subscriptions'], ['Customers', 'https://dashboard.stripe.com/test/customers']].map(([l, u]) => <a key={l} href={u} target="_blank" rel="noopener noreferrer" style={{ padding: '9px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', textDecoration: 'none', fontWeight: 600, fontSize: 13 }}>{l} →</a>)}
               </div>
             </Ch>
             <Ch mb={0}><Hd t={`${paidUsers} Paid Users`} />
@@ -404,14 +404,14 @@ export default function AdminClient() {
             <Ch mb={0}><Hd t="⭐ Featured Products" s="Shown in the app mockup hero (one per line)" />
               <div style={{ padding: '14px 20px' }}>
                 <textarea value={featuredProducts} onChange={e => setFeaturedProducts(e.target.value)} placeholder={'Sony WH-1000XM5\niPhone 15 Pro\nSamsung 4K TV'} rows={5} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
-                <button onClick={saveFeatured} disabled={savingFeatured} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>{savingFeatured ? 'Saving…' : 'Save'}</button>
+                <button onClick={saveFeatured} disabled={savingFeatured} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>{savingFeatured ? 'Saving…' : 'Save'}</button>
               </div>
             </Ch>
             <Ch mb={0}><Hd t="📣 Broadcast Message" s="Requires email provider (Resend/SendGrid)" />
               <div style={{ padding: '14px 20px' }}>
                 <textarea value={broadcastMsg} onChange={e => setBroadcastMsg(e.target.value)} placeholder="Message to all users..." rows={4} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid hsl(var(--border))', background: 'hsl(var(--muted))', color: 'hsl(var(--foreground))', fontSize: 13, outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                 <div style={{ display: 'flex', gap: 10, marginTop: 10, alignItems: 'center' }}>
-                  <button onClick={() => toast.info('Connect Resend or SendGrid to enable broadcasts')} disabled={!broadcastMsg} style={{ padding: '8px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', border: 'none', cursor: broadcastMsg ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, opacity: broadcastMsg ? 1 : 0.5 }}>Send to {stats?.totalUsers || 0} users</button>
+                  <button onClick={() => toast.info('Connect Resend or SendGrid to enable broadcasts')} disabled={!broadcastMsg} style={{ padding: '8px 18px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', border: 'none', cursor: broadcastMsg ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, opacity: broadcastMsg ? 1 : 0.5 }}>Send to {stats?.totalUsers || 0} users</button>
                   <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>Requires email integration</span>
                 </div>
               </div>
