@@ -112,7 +112,7 @@ function AppMockup() {
             <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
           </svg>
           <span style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}>Search any product…</span>
-          <div style={{ marginLeft: 'auto', background: 'hsl(var(--primary))', color: 'white', borderRadius: 100, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>Search</div>
+          <div style={{ marginLeft: 'auto', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', borderRadius: 100, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>Search</div>
         </div>
       </div>
       {/* Mock product cards */}
@@ -438,7 +438,7 @@ export default function SearchResultsClient() {
           Create a free account to compare prices across 40+ marketplaces and track price drops.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Link href="/sign-up-login" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'white', textDecoration: 'none', fontWeight: 700, fontSize: 15 }}>
+          <Link href="/sign-up-login" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 100, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', textDecoration: 'none', fontWeight: 700, fontSize: 15 }}>
             Sign in
           </Link>
           <Link href="/sign-up-login" style={{ display: 'inline-block', padding: '12px 32px', borderRadius: 100, border: '1.5px solid hsl(var(--border))', color: 'hsl(var(--foreground))', textDecoration: 'none', fontWeight: 600, fontSize: 15 }}>
@@ -587,7 +587,7 @@ export default function SearchResultsClient() {
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 100, border: `1.5px solid ${filterOpen ? 'hsl(var(--primary))' : 'hsl(var(--border))'}`, background: filterOpen ? 'hsl(var(--primary) / 0.08)' : 'hsl(var(--card))', color: filterOpen ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))', cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.15s' }}>
               <SlidersHorizontal size={14} />
               Filters
-              {activeFilterCount > 0 && <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'white', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{activeFilterCount}</span>}
+              {activeFilterCount > 0 && <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{activeFilterCount}</span>}
             </button>
 
           </div>
