@@ -55,7 +55,7 @@ export default function WatchlistTab({ items, selected, onSelect, onRemove }: Wa
         </p>
         <Link
           href="/product-search-results"
-          className="mt-4 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150"
+          className="mt-4 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150"
         >
           Search products
         </Link>
@@ -200,7 +200,7 @@ export default function WatchlistTab({ items, selected, onSelect, onRemove }: Wa
                     )}
                     <Link
                       href="/product-search-results"
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white hover:opacity-90 active:scale-95 transition-all duration-150"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 active:scale-95 transition-all duration-150"
                     >
                       <ExternalLink size={11} /> Compare prices
                     </Link>
