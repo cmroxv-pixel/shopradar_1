@@ -137,7 +137,7 @@ function UserAvatar() {
         }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid hsl(var(--border))' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
                 {initial}
               </div>
               <div style={{ overflow: 'hidden', flex: 1 }}>
@@ -148,7 +148,7 @@ function UserAvatar() {
                     </p>
                   )}
                   <div style={{ display: 'flex', gap: 4 }}>
-                    {isAdmin && <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700 }}>ADMIN</span>}
+                    {isAdmin && <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', fontWeight: 700 }}>ADMIN</span>}
                     <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: planColor, color: 'white', fontWeight: 700, opacity: plan === 'free' ? 0.5 : 1 }}>{planLabel}</span>
                   </div>
                 </div>
@@ -162,7 +162,7 @@ function UserAvatar() {
             <NavLink href="/settings" icon={<IconGear />} label="Settings" onClick={() => setOpen(false)} />
             {isAdmin && (
               <NavLink href="/admin" icon={<IconAdmin />}
-                label={<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>Admin Panel <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'white', fontWeight: 700 }}>ONLY YOU</span></span>}
+                label={<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>Admin Panel <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', fontWeight: 700 }}>ONLY YOU</span></span>}
                 onClick={() => setOpen(false)} color="hsl(var(--primary))"
               />
             )}
