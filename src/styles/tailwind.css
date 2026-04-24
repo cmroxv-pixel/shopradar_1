@@ -275,3 +275,41 @@ main > * {
   .bg-muted\/60           { background-color: hsl(var(--muted) / 0.6); }
   .tabular-nums           { font-variant-numeric: tabular-nums; }
 }
+
+/* ── Theme variants — all dark by default to match app ── */
+/* ThemeProvider sets data-theme + data-dark on <html> */
+/* We map all themes to our monochrome dark palette */
+
+[data-dark="true"],
+[data-theme][data-dark="true"],
+[data-theme="ocean"],
+[data-theme="ocean"][data-dark="true"],
+[data-theme="rose"],
+[data-theme="violet"],
+[data-theme="emerald"],
+[data-theme="amber"],
+[data-theme="slate"],
+[data-theme="crimson"],
+[data-theme="indigo"] {
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+  --background: 0 0% 4%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 4%;
+  --card-foreground: 0 0% 98%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 63%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 0 0% 32%;
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 98%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 98%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 84% 60%;
+  --success: 152 55% 46%;
+  --warning: 38 85% 55%;
+  --popover: 0 0% 4%;
+  --popover-foreground: 0 0% 98%;
+}
