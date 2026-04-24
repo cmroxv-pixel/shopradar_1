@@ -188,7 +188,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           <button onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted border border-border transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed">
             <ChevronLeft size={14} /> Back
           </button>
-          <button onClick={() => isLast ? onComplete() : setStep(s => s + 1)} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:opacity-90 active:scale-95 transition-all duration-150 shadow-sm shadow-primary/20">
+          <button onClick={() => isLast ? onComplete() : setStep(s => s + 1)} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90 active:scale-95 transition-all duration-150 shadow-sm shadow-primary/20">
             {isLast ? <><Check size={14} /> Get started</> : <>Next <ChevronRight size={14} /></>}
           </button>
         </div>
