@@ -112,7 +112,7 @@ export default function ComparisonDrawer({ items, onRemove, onClose }: Compariso
               href={item.listingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex-1 text-center py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 ${item.price === cheapestPrice ? 'bg-primary text-white hover:opacity-90' : 'bg-muted text-foreground hover:bg-muted/80'}`}
+              className={`flex-1 text-center py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 ${item.price === cheapestPrice ? 'bg-primary text-primary-foreground hover:opacity-90' : 'bg-muted text-foreground hover:bg-muted/80'}`}
             >
               {item.price === cheapestPrice ? '🏆 ' : ''}View on {item.marketplace}
             </a>
