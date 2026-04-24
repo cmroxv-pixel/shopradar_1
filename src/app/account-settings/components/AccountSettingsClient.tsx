@@ -488,7 +488,7 @@ export default function AccountSettingsClient() {
     <div className="max-w-2xl mx-auto py-4">
       {/* View as Normal User Banner */}
       {viewAsUser && user?.email === ADMIN_EMAIL && (
-        <div className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500 text-white shadow-lg">
+        <div className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500 text-primary-foreground shadow-lg">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Users size={16} />
             Viewing as Normal User — Admin elements are hidden
@@ -611,7 +611,7 @@ export default function AccountSettingsClient() {
             <button
               onClick={handleProfileSave}
               disabled={profileSaving}
-              className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-60 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-60 flex items-center gap-2"
             >
               {profileSaving && <Loader2 size={14} className="animate-spin" />}
               Save Changes
@@ -669,7 +669,7 @@ export default function AccountSettingsClient() {
             <button
               onClick={handlePasswordChange}
               disabled={passwordSaving}
-              className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-60 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-60 flex items-center gap-2"
             >
               {passwordSaving && <Loader2 size={14} className="animate-spin" />}
               Update Password
@@ -717,7 +717,7 @@ export default function AccountSettingsClient() {
               <button
                 onClick={handleAdminCodeSubmit}
                 disabled={!adminCode}
-                className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-50 flex items-center gap-2"
               >
                 <Shield size={14} />
                 Access Admin Panel
@@ -760,7 +760,7 @@ export default function AccountSettingsClient() {
             <button
               onClick={handleDeleteAccount}
               disabled={deleting || deleteConfirm !== 'DELETE'}
-              className="px-5 py-2.5 rounded-xl bg-destructive text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-destructive text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all duration-150 disabled:opacity-50 flex items-center gap-2"
             >
               {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               Delete My Account
