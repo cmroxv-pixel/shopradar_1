@@ -216,7 +216,7 @@ function PriceAlertButton({ listing }: { listing: Listing }) {
           <input type="number" placeholder="Alert me at A$..." value={targetPrice} onChange={e => setTargetPrice(e.target.value)}
             style={{ width: '100%', padding: '6px 8px', fontSize: 11, borderRadius: 6, background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))', outline: 'none', marginBottom: 6 }} />
           <button onClick={handleSave} disabled={!targetPrice}
-            style={{ width: '100%', padding: '6px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: 'hsl(var(--primary))', color: 'white', border: 'none', cursor: 'pointer', opacity: !targetPrice ? 0.4 : 1 }}>
+            style={{ width: '100%', padding: '6px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', border: 'none', cursor: 'pointer', opacity: !targetPrice ? 0.4 : 1 }}>
             Set Alert
           </button>
         </div>
