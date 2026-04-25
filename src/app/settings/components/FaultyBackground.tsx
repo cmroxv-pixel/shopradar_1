@@ -1,3 +1,4 @@
+'use client';
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
 import { useEffect, useRef, useMemo, useCallback } from 'react';
 import '@/components/ui/FaultyTerminal.css';
