@@ -28,6 +28,8 @@ export default function AuthClient() {
   const [redirecting, setRedirecting] = useState(false);
   const { signIn, signUp, user, loading: authLoading } = useAuth();
 
+  const router = useRouter();
+
   // Already logged in — redirect away immediately
   useEffect(() => {
     if (!authLoading && user) {
@@ -35,7 +37,6 @@ export default function AuthClient() {
       router.replace('/watchlist-price-alerts');
     }
   }, [user, authLoading, router]);
-  const router = useRouter();
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [lockCountdown, setLockCountdown] = useState(0);
